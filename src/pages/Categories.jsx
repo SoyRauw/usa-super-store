@@ -5,6 +5,8 @@ import {
   updateCategory,
   deleteCategory,
 } from '../lib/api'
+import { getErrorMessage } from '../lib/errors'
+import ConfirmModal from '../components/ConfirmModal'
 
 export default function Categories() {
   const [categories, setCategories] = useState([])
@@ -12,6 +14,7 @@ export default function Categories() {
   const [error, setError] = useState(null)
   const [editing, setEditing] = useState(null)
   const [name, setName] = useState('')
+  const [deleteId, setDeleteId] = useState(null)
 
   useEffect(() => {
     loadCategories()
@@ -23,7 +26,7 @@ export default function Categories() {
       const data = await fetchCategories()
       setCategories(data)
     } catch (err) {
-      setError(err.message)
+      setError(getErrorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -42,7 +45,7 @@ export default function Categories() {
       setEditing(null)
       await loadCategories()
     } catch (err) {
-      setError(err.message)
+      setError(getErrorMessage(err))
     }
   }
 
@@ -51,14 +54,15 @@ export default function Categories() {
     setName(category.name)
   }
 
-  async function handleDelete(id) {
-    if (!confirm('¿Eliminar esta categoría?')) return
+  async function handleDelete() {
+    if (!deleteId) return
     setError(null)
     try {
-      await deleteCategory(id)
+      await deleteCategory(deleteId)
+      setDeleteId(null)
       await loadCategories()
     } catch (err) {
-      setError(err.message)
+      setError(getErrorMessage(err))
     }
   }
 
@@ -70,6 +74,16 @@ export default function Categories() {
       </div>
 
       {error && <p className="mb-4 rounded-md bg-red-50 p-3 text-red-700">{error}</p>}
+
+      <ConfirmModal
+        isOpen={!!deleteId}
+        title="Eliminar categoría"
+        message="¿Estás seguro de que deseas eliminar esta categoría? Los productos asociados ya no tendrán categoría."
+        confirmText="Eliminar"
+        confirmVariant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteId(null)}
+      />
 
       <div className="card mb-6">
         <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
@@ -124,7 +138,7 @@ export default function Categories() {
                       Editar
                     </button>
                     <button
-                      onClick={() => handleDelete(cat.id)}
+                      onClick={() => setDeleteId(cat.id)}
                       className="font-medium text-red-600 hover:text-red-800"
                     >
                       Eliminar

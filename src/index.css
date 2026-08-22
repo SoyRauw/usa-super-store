@@ -208,6 +208,14 @@ a {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
 }
 
+.label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-dark-soft);
+}
+
 .card {
   background: var(--color-surface);
   border-radius: var(--radius-lg);

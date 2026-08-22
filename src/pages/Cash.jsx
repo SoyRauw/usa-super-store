@@ -7,6 +7,8 @@ import {
   getSessionTotalsByMethod,
 } from '../hooks/useCashSession'
 import { PAYMENT_METHODS, formatMoney } from '../lib/api'
+import { getErrorMessage } from '../lib/errors'
+import ConfirmModal from '../components/ConfirmModal'
 import { supabase } from '../lib/supabaseClient'
 
 export default function Cash() {
@@ -84,7 +86,7 @@ export default function Cash() {
       await openSession(openAmount)
       setOpenAmount('')
     } catch (e) {
-      setFormError(e.message)
+      setFormError(getErrorMessage(e))
     } finally {
       setSubmitting(false)
       setConfirmOpen(false)
@@ -106,7 +108,7 @@ export default function Cash() {
       await closeSession(closeAmount)
       setCloseAmount('')
     } catch (e) {
-      setFormError(e.message)
+      setFormError(getErrorMessage(e))
     } finally {
       setSubmitting(false)
       setConfirmOpen(false)
@@ -350,44 +352,26 @@ export default function Cash() {
         )}
       </div>
 
-      {confirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <h3 className="mb-2 text-xl">
-              {confirmType === 'open' ? '¿Abrir caja?' : '¿Cerrar caja?'}
-            </h3>
-            <p className="mb-4 text-slate-600">
-              {confirmType === 'open'
-                ? `Se abrirá la caja con ${formatMoney(openAmount)}.`
-                : `Se cerrará la caja. La diferencia es ${
-                    cashDifference === 0
-                      ? 'cuadrada'
-                      : cashDifference > 0
-                        ? `sobrante de ${formatMoney(cashDifference)}`
-                        : `faltante de ${formatMoney(Math.abs(cashDifference))}`
-                  }.`}
-            </p>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setConfirmOpen(false)}
-                className="btn btn-ghost"
-                disabled={submitting}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={confirmType === 'open' ? executeOpen : executeClose}
-                disabled={submitting}
-                className={
-                  confirmType === 'open' ? 'btn btnPrimary' : 'btn btnSecondary'
-                }
-              >
-                {submitting ? 'Procesando...' : 'Confirmar'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        isOpen={confirmOpen}
+        title={confirmType === 'open' ? '¿Abrir caja?' : '¿Cerrar caja?'}
+        message={
+          confirmType === 'open'
+            ? `Se abrirá la caja con ${formatMoney(openAmount)}.`
+            : `Se cerrará la caja. La diferencia es ${
+                cashDifference === 0
+                  ? 'cuadrada'
+                  : cashDifference > 0
+                    ? `sobrante de ${formatMoney(cashDifference)}`
+                    : `faltante de ${formatMoney(Math.abs(cashDifference))}`
+              }.`
+        }
+        onConfirm={confirmType === 'open' ? executeOpen : executeClose}
+        onCancel={() => setConfirmOpen(false)}
+        confirmText={submitting ? 'Procesando...' : 'Confirmar'}
+        confirmVariant={confirmType === 'open' ? 'primary' : 'danger'}
+        disabled={submitting}
+      />
     </div>
   )
 }

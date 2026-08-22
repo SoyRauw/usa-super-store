@@ -210,3 +210,64 @@ export const PAYMENT_METHODS = {
 export function formatMoney(value) {
   return `$${(parseFloat(value) || 0).toFixed(2)}`
 }
+
+export async function fetchReportMovements({ startDate, endDate } = {}) {
+  let query = supabase
+    .from('movements')
+    .select('*, movement_items(*, products(name, sku)), movement_payments(*)')
+    .eq('movement_type', 'venta')
+    .eq('status', 'pagado')
+    .order('created_at', { ascending: true })
+
+  if (startDate) query = query.gte('created_at', startDate)
+  if (endDate) query = query.lte('created_at', endDate)
+
+  const { data, error } = await query
+  if (error) throw error
+  return data || []
+}
+
+export async function fetchLowStockProducts() {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*, categories(name)')
+    .eq('active', true)
+    .lte('stock', LOW_STOCK_THRESHOLD)
+    .order('stock', { ascending: true })
+
+  if (error) throw error
+  return data || []
+}
+
+export async function fetchDashboardStats() {
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  const todayEnd = new Date()
+  todayEnd.setHours(23, 59, 59, 999)
+
+  const [{ data: movements }, { count: lowStockCount }] = await Promise.all([
+    supabase
+      .from('movements')
+      .select('total_amount')
+      .eq('movement_type', 'venta')
+      .eq('status', 'pagado')
+      .gte('created_at', todayStart.toISOString())
+      .lte('created_at', todayEnd.toISOString()),
+    supabase
+      .from('products')
+      .select('id', { count: 'exact', head: true })
+      .eq('active', true)
+      .lte('stock', LOW_STOCK_THRESHOLD),
+  ])
+
+  const todaySales = (movements || []).reduce(
+    (sum, m) => sum + (parseFloat(m.total_amount) || 0),
+    0
+  )
+
+  return {
+    todaySales,
+    todayCount: movements?.length || 0,
+    lowStockCount: lowStockCount || 0,
+  }
+}

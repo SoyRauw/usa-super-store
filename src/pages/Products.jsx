@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Plus } from 'lucide-react'
 import ProductForm from '../components/ProductForm'
+import ConfirmModal from '../components/ConfirmModal'
 import {
   fetchProducts,
   fetchCategories,
@@ -10,6 +11,7 @@ import {
   isLowStock,
   formatMoney,
 } from '../lib/api'
+import { getErrorMessage } from '../lib/errors'
 
 export default function Products() {
   const [products, setProducts] = useState([])
@@ -18,6 +20,7 @@ export default function Products() {
   const [error, setError] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState(null)
+  const [deleteId, setDeleteId] = useState(null)
   const [filters, setFilters] = useState({
     search: '',
     categoryId: '',
@@ -40,7 +43,7 @@ export default function Products() {
       setProducts(prods)
       setCategories(cats)
     } catch (err) {
-      setError(err.message)
+      setError(getErrorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -58,18 +61,19 @@ export default function Products() {
       setEditing(null)
       await loadData()
     } catch (err) {
-      setError(err.message)
+      setError(getErrorMessage(err))
     }
   }
 
-  async function handleDelete(id) {
-    if (!confirm('¿Eliminar este producto?')) return
+  async function handleDelete() {
+    if (!deleteId) return
     setError(null)
     try {
-      await deleteProduct(id)
+      await deleteProduct(deleteId)
+      setDeleteId(null)
       await loadData()
     } catch (err) {
-      setError(err.message)
+      setError(getErrorMessage(err))
     }
   }
 
@@ -100,6 +104,16 @@ export default function Products() {
       </div>
 
       {error && <p className="mb-4 rounded-md bg-red-50 p-3 text-red-700">{error}</p>}
+
+      <ConfirmModal
+        isOpen={!!deleteId}
+        title="Eliminar producto"
+        message="¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer."
+        confirmText="Eliminar"
+        confirmVariant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteId(null)}
+      />
 
       <div className="card mb-5 flex flex-wrap items-end gap-3">
         <div className="min-w-[200px] flex-1">
@@ -193,7 +207,7 @@ export default function Products() {
                       Editar
                     </button>
                     <button
-                      onClick={() => handleDelete(p.id)}
+                      onClick={() => setDeleteId(p.id)}
                       className="font-medium text-red-600 hover:text-red-800"
                     >
                       Eliminar

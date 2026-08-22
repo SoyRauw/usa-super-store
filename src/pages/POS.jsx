@@ -11,6 +11,8 @@ import {
   formatMoney,
   PAYMENT_METHODS,
 } from '../lib/api'
+import { getErrorMessage } from '../lib/errors'
+import ConfirmModal from '../components/ConfirmModal'
 import ProductSearch from '../components/pos/ProductSearch'
 import Cart from '../components/pos/Cart'
 import PaymentPanel from '../components/pos/PaymentPanel'
@@ -178,7 +180,7 @@ export default function POS() {
       clearCart()
     } catch (e) {
       console.error(e)
-      setError(e.message || 'Error al procesar la venta')
+      setError(getErrorMessage(e))
     } finally {
       setSubmitting(false)
       setConfirmOpen(false)
@@ -272,51 +274,37 @@ export default function POS() {
         </>
       )}
 
-      {confirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <h3 className="mb-2 text-xl">¿Completar venta?</h3>
-            <ul className="mb-4 space-y-1 text-sm text-slate-600">
-              <li className="flex justify-between">
-                <span>Productos</span>
-                <span>{items.reduce((s, i) => s + i.quantity, 0)} uds</span>
-              </li>
-              <li className="flex justify-between">
-                <span>Subtotal</span>
-                <span>{formatMoney(subtotal)}</span>
-              </li>
-              <li className="flex justify-between font-semibold text-blue-950">
-                <span>Total</span>
-                <span>{formatMoney(total)}</span>
-              </li>
-              <li className="flex justify-between">
-                <span>Recibido</span>
-                <span>{formatMoney(totalPaid)}</span>
-              </li>
-              <li className="flex justify-between">
-                <span>Cambio</span>
-                <span>{formatMoney(Math.max(0, difference))}</span>
-              </li>
-            </ul>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setConfirmOpen(false)}
-                className="btn btnGhost"
-                disabled={submitting}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={executePay}
-                disabled={submitting}
-                className="btn btnPrimary"
-              >
-                {submitting ? 'Procesando...' : 'Confirmar venta'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        isOpen={confirmOpen}
+        title="¿Completar venta?"
+        onConfirm={executePay}
+        onCancel={() => setConfirmOpen(false)}
+        confirmText={submitting ? 'Procesando...' : 'Confirmar venta'}
+        disabled={submitting}
+      >
+        <ul className="space-y-1 text-sm text-slate-600">
+          <li className="flex justify-between">
+            <span>Productos</span>
+            <span>{items.reduce((s, i) => s + i.quantity, 0)} uds</span>
+          </li>
+          <li className="flex justify-between">
+            <span>Subtotal</span>
+            <span>{formatMoney(subtotal)}</span>
+          </li>
+          <li className="flex justify-between font-semibold text-blue-950">
+            <span>Total</span>
+            <span>{formatMoney(total)}</span>
+          </li>
+          <li className="flex justify-between">
+            <span>Recibido</span>
+            <span>{formatMoney(totalPaid)}</span>
+          </li>
+          <li className="flex justify-between">
+            <span>Cambio</span>
+            <span>{formatMoney(Math.max(0, difference))}</span>
+          </li>
+        </ul>
+      </ConfirmModal>
 
       {completedSale && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">

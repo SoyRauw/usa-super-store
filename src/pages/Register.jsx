@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { getErrorMessage } from '../lib/errors'
 
 export default function Register() {
   const [email, setEmail] = useState('')
@@ -19,7 +20,7 @@ export default function Register() {
       setMessage('Registro exitoso. Revisa tu correo para confirmar.')
       setTimeout(() => navigate('/login'), 2000)
     } catch (err) {
-      setError(err.message)
+      setError(getErrorMessage(err))
     }
   }
 

@@ -10,6 +10,7 @@ import Products from './pages/Products'
 import POS from './pages/POS'
 import Cash from './pages/Cash'
 import Movements from './pages/Movements'
+import Reports from './pages/Reports'
 
 function App() {
   return (
@@ -74,6 +75,16 @@ function App() {
               <RequireAuth>
                 <Layout>
                   <Movements />
+                </Layout>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <RequireAuth>
+                <Layout>
+                  <Reports />
                 </Layout>
               </RequireAuth>
             }

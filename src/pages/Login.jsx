@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { getErrorMessage } from '../lib/errors'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -16,7 +17,7 @@ export default function Login() {
       await signIn(email, password)
       navigate('/')
     } catch (err) {
-      setError(err.message)
+      setError(getErrorMessage(err))
     }
   }
 

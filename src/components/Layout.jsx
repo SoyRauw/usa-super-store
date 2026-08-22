@@ -7,6 +7,7 @@ import {
   Store,
   Banknote,
   FileText,
+  BarChart3,
   LogOut,
   Menu,
   X,
@@ -22,6 +23,7 @@ const navItems = [
   { to: '/pos', icon: Store, label: 'POS' },
   { to: '/cash', icon: Banknote, label: 'Caja' },
   { to: '/movements', icon: FileText, label: 'Movimientos' },
+  { to: '/reports', icon: BarChart3, label: 'Reportes' },
 ]
 
 export default function Layout({ children }) {
