@@ -49,16 +49,14 @@ export default function Products() {
   async function handleSave({ product, variants }) {
     setError(null)
     try {
-      if (editing) {
-        await updateProduct(editing.id, { product, variants })
-      } else {
-        await createProduct({ product, variants })
-      }
-      setShowForm(false)
-      setEditing(null)
+      const saved = editing
+        ? await updateProduct(editing.id, { product, variants })
+        : await createProduct({ product, variants })
       await loadData()
+      return saved
     } catch (err) {
       setError(getErrorMessage(err))
+      throw err
     }
   }
 

@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { X, Plus, Trash2, Copy, Tag } from 'lucide-react'
+import { X, Plus, Trash2, Copy, Tag, Download } from 'lucide-react'
 import {
   calculateSalePrice,
   generateProductCode,
   generateVariantCode,
   formatVariantLabel,
 } from '../lib/sku'
+import { exportProductLabels } from '../lib/labelExport'
 
 function emptyVariant() {
   return {
@@ -43,6 +44,8 @@ export default function ProductFormModal({ product, categories, allProducts, onS
   const [priceTouched, setPriceTouched] = useState(false)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [savedProduct, setSavedProduct] = useState(null)
 
   useEffect(() => {
     if (product) {
@@ -59,6 +62,8 @@ export default function ProductFormModal({ product, categories, allProducts, onS
       setPriceTouched(false)
     }
     setError('')
+    setSaved(false)
+    setSavedProduct(null)
   }, [product])
 
   const category = useMemo(
@@ -206,17 +211,27 @@ export default function ProductFormModal({ product, categories, allProducts, onS
 
       const variantRows = variants
         .filter((v) => !v.isDeleted)
-        .map((v) => ({
-          ...v,
-          product_id: productPayload.id,
-          sku: v.sku.trim(),
-          barcode: v.barcode.trim() || v.sku.trim(),
-          stock: parseInt(v.stock, 10) || 0,
-          price: v.price ? parseFloat(v.price) : null,
-          active: true,
-        }))
+        .map((v) => {
+          const isTempId = String(v.id).startsWith('temp-')
+          return {
+            ...(isTempId ? {} : { id: v.id }),
+            product_id: productPayload.id,
+            sku: v.sku.trim(),
+            barcode: v.barcode.trim() || v.sku.trim(),
+            color: v.color?.trim() || null,
+            variant_name: v.variant_name?.trim() || null,
+            size: v.size?.trim() || null,
+            stock: parseInt(v.stock, 10) || 0,
+            price: v.price ? parseFloat(v.price) : null,
+            active: true,
+            isNew: v.isNew,
+            isDeleted: v.isDeleted,
+          }
+        })
 
-      await onSave({ product: productPayload, variants: variantRows })
+      const result = await onSave({ product: productPayload, variants: variantRows })
+      setSaved(true)
+      setSavedProduct(result || { ...productPayload, product_variants: variantRows })
     } catch (err) {
       setError(err.message || 'Error al guardar')
     } finally {
@@ -240,7 +255,13 @@ export default function ProductFormModal({ product, categories, allProducts, onS
 
         {error && <p className="mb-4 rounded-md bg-red-50 p-3 text-red-700">{error}</p>}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        {saved && (
+          <div className="mb-4 rounded-md bg-blue-50 p-3 text-sm text-blue-800">
+            Puedes seguir editando o descargar las etiquetas ahora.
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-5" aria-hidden={saved}>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="sm:col-span-2 lg:col-span-2">
               <label className="label">Nombre del producto</label>
@@ -401,12 +422,34 @@ export default function ProductFormModal({ product, categories, allProducts, onS
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
-            <button type="button" onClick={onClose} className="btn btnGhost" disabled={saving}>Cancelar</button>
-            <button type="submit" className="btn btnPrimary" disabled={saving}>
-              {saving ? 'Guardando...' : isEditing ? 'Actualizar producto' : 'Crear producto'}
-            </button>
-          </div>
+          {saved ? (
+            <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+              <p className="mb-3 font-semibold text-green-800">Producto guardado correctamente.</p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    exportProductLabels(
+                      savedProduct || { ...form, product_variants: variants.filter((v) => !v.isDeleted) }
+                    )
+                  }
+                  className="btn btnPrimary"
+                >
+                  <Download size={16} /> Descargar Excel de etiquetas
+                </button>
+                <button type="button" onClick={onClose} className="btn btnGhost">
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+              <button type="button" onClick={onClose} className="btn btnGhost" disabled={saving}>Cancelar</button>
+              <button type="submit" className="btn btnPrimary" disabled={saving}>
+                {saving ? 'Guardando...' : isEditing ? 'Actualizar producto' : 'Crear producto'}
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </div>

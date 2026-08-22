@@ -18,7 +18,7 @@ export function exportProductLabels(product) {
         Nombre: product.name || '',
         Variante: formatVariantLabel(v, product.categories?.size_label),
         Color: v.color || '',
-        Tamaño: v.size || '',
+        'Peso / Medida': v.size || '',
         Precio: parseFloat(price).toFixed(2),
         Barcode: v.barcode || v.sku || '',
       })

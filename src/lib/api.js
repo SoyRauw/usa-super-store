@@ -77,6 +77,24 @@ export async function fetchProductById(id) {
   return data
 }
 
+function cleanVariantPayload(v) {
+  const payload = {
+    product_id: v.product_id,
+    sku: v.sku,
+    barcode: v.barcode || v.sku,
+    color: v.color || null,
+    variant_name: v.variant_name || null,
+    size: v.size || null,
+    stock: v.stock,
+    price: v.price,
+    active: v.active ?? true,
+  }
+  if (v.id && !String(v.id).startsWith('temp-')) {
+    payload.id = v.id
+  }
+  return payload
+}
+
 export async function createProduct({ product, variants }) {
   const { data: prod, error: prodError } = await supabase
     .from('products')
@@ -86,7 +104,7 @@ export async function createProduct({ product, variants }) {
   if (prodError) throw prodError
 
   if (variants?.length) {
-    const rows = variants.map((v) => ({ ...v, product_id: prod.id }))
+    const rows = variants.map((v) => cleanVariantPayload({ ...v, product_id: prod.id }))
     const { error: varError } = await supabase.from('product_variants').insert(rows)
     if (varError) throw varError
   }
@@ -106,13 +124,10 @@ export async function updateProduct(id, { product, variants }) {
       if (v.isDeleted && v.id && !String(v.id).startsWith('temp-')) {
         toDelete.push(v.id)
       } else if (!v.isDeleted) {
-        const row = { ...v, product_id: id }
-        delete row.isNew
-        delete row.isDeleted
+        const row = cleanVariantPayload({ ...v, product_id: id })
         if (v.id && !String(v.id).startsWith('temp-')) {
           toUpdate.push(row)
         } else {
-          delete row.id
           toInsert.push(row)
         }
       }
