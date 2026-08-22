@@ -4,8 +4,8 @@
 -- 1. Categories: prefix + optional size config
 ALTER TABLE public.categories
   ADD COLUMN IF NOT EXISTS prefix TEXT,
-  ADD COLUMN IF NOT EXISTS size_label TEXT DEFAULT 'Talla',
-  ADD COLUMN IF NOT EXISTS size_options TEXT[] DEFAULT ARRAY['XS','S','M','L','XL','2XL','UNI'];
+  ADD COLUMN IF NOT EXISTS size_label TEXT DEFAULT 'Peso',
+  ADD COLUMN IF NOT EXISTS size_options TEXT[] DEFAULT ARRAY[]::TEXT[];
 
 UPDATE public.categories
 SET prefix = CASE
@@ -92,7 +92,14 @@ DELETE FROM public.movements;
 DELETE FROM public.product_variants;
 DELETE FROM public.products;
 
--- 6. RLS
+-- 6. Fix existing categories that still use old clothing defaults
+UPDATE public.categories
+SET size_label = 'Peso',
+    size_options = ARRAY[]::TEXT[]
+WHERE size_label = 'Talla'
+   OR size_options @> ARRAY['XS','S','M','L','XL']::TEXT[];
+
+-- 7. RLS
 ALTER TABLE public.product_variants ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS product_variants_select ON public.product_variants;

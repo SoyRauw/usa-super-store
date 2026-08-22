@@ -337,13 +337,13 @@ export default function ProductFormModal({ product, categories, allProducts, onS
                       className="input sm:col-span-1"
                     />
                     <input
-                      placeholder="Color"
+                      placeholder="Color (opcional)"
                       value={v.color}
                       onChange={(e) => updateVariant(v.id, 'color', e.target.value)}
                       className="input sm:col-span-1"
                     />
                     <input
-                      placeholder="Sabor / Modelo"
+                      placeholder="Sabor / Modelo (opcional)"
                       value={v.variant_name}
                       onChange={(e) => updateVariant(v.id, 'variant_name', e.target.value)}
                       className="input sm:col-span-1"
@@ -354,14 +354,14 @@ export default function ProductFormModal({ product, categories, allProducts, onS
                         onChange={(e) => updateVariant(v.id, 'size', e.target.value)}
                         className="input sm:col-span-1"
                       >
-                        <option value="">{category?.size_label || 'Talla'}</option>
+                        <option value="">{category?.size_label || 'Peso/Medida'}</option>
                         {sizeOptions.map((s) => (
                           <option key={s} value={s}>{s}</option>
                         ))}
                       </select>
                     ) : (
                       <input
-                        placeholder="Tamaño"
+                        placeholder="Peso / Medida (ej. 950ml, 300g)"
                         value={v.size}
                         onChange={(e) => updateVariant(v.id, 'size', e.target.value)}
                         className="input sm:col-span-1"

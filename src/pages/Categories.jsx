@@ -9,7 +9,8 @@ import {
 import { getErrorMessage } from '../lib/errors'
 import ConfirmModal from '../components/ConfirmModal'
 
-const DEFAULT_SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', '2XL', 'UNI']
+const DEFAULT_SIZE_LABEL = 'Peso'
+const DEFAULT_SIZE_OPTIONS = []
 
 export default function Categories() {
   const [categories, setCategories] = useState([])
@@ -20,8 +21,8 @@ export default function Categories() {
   const [form, setForm] = useState({
     name: '',
     prefix: '',
-    size_label: 'Talla',
-    size_options: DEFAULT_SIZE_OPTIONS.join(', '),
+    size_label: DEFAULT_SIZE_LABEL,
+    size_options: '',
   })
 
   useEffect(() => {
@@ -44,8 +45,8 @@ export default function Categories() {
     setForm({
       name: '',
       prefix: '',
-      size_label: 'Talla',
-      size_options: DEFAULT_SIZE_OPTIONS.join(', '),
+      size_label: DEFAULT_SIZE_LABEL,
+      size_options: '',
     })
   }
 
@@ -54,7 +55,7 @@ export default function Categories() {
     setForm({
       name: category.name,
       prefix: category.prefix || '',
-      size_label: category.size_label || 'Talla',
+      size_label: category.size_label || DEFAULT_SIZE_LABEL,
       size_options: (category.size_options || DEFAULT_SIZE_OPTIONS).join(', '),
     })
   }
@@ -66,7 +67,7 @@ export default function Categories() {
     const payload = {
       name: form.name.trim(),
       prefix: form.prefix.trim().toUpperCase() || getCategoryPrefix(form.name.trim()),
-      size_label: form.size_label.trim() || 'Talla',
+      size_label: form.size_label.trim() || DEFAULT_SIZE_LABEL,
       size_options: form.size_options
         .split(',')
         .map((s) => s.trim())
@@ -142,22 +143,27 @@ export default function Categories() {
             />
           </div>
           <div>
-            <label className="label">Etiqueta de medida</label>
+            <label className="label">Etiqueta de peso/medida</label>
             <input
               type="text"
               value={form.size_label}
               onChange={(e) => setForm({ ...form, size_label: e.target.value })}
+              placeholder="Peso"
               className="input"
             />
           </div>
           <div className="sm:col-span-2 lg:col-span-4">
-            <label className="label">Opciones de medida (separadas por coma)</label>
+            <label className="label">Opciones de peso/medida (separadas por coma)</label>
             <input
               type="text"
               value={form.size_options}
               onChange={(e) => setForm({ ...form, size_options: e.target.value })}
+              placeholder="ej. 250ml, 500ml, 1L o déjalo vacío para escribir a mano"
               className="input"
             />
+            <p className="mt-1 text-xs text-slate-500">
+              Déjalo vacío para escribir el peso/medida libremente en cada producto (950ml, 300g…).
+            </p>
           </div>
           <div className="flex gap-2 sm:col-span-2 lg:col-span-4">
             <button type="submit" className="btn btnPrimary">
@@ -188,7 +194,7 @@ export default function Categories() {
               <tr>
                 <th>Nombre</th>
                 <th>Prefijo</th>
-                <th>Medida</th>
+                <th>Peso/Medida</th>
                 <th>Opciones</th>
                 <th className="text-right">Acciones</th>
               </tr>

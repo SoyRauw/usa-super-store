@@ -58,11 +58,13 @@ export function generateVariantCode(productId, existingVariantCodes = []) {
   return `${productId}-${String(max + 1).padStart(3, '0')}`
 }
 
-export function formatVariantLabel(variant, sizeLabel = 'Talla') {
+export function formatVariantLabel(variant, sizeLabel = 'Peso') {
   const parts = []
   if (variant?.color) parts.push(variant.color)
   if (variant?.variant_name) parts.push(variant.variant_name)
-  if (variant?.size) parts.push(`${sizeLabel} ${variant.size}`)
+  // Mostrar peso/medida directamente sin prefijo redundante,
+  // porque usualmente ya incluye la unidad (950ml, 300g, 1L).
+  if (variant?.size) parts.push(variant.size)
   if (parts.length === 0) return 'Estándar'
   return parts.join(' / ')
 }
