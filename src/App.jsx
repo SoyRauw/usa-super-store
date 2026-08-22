@@ -7,6 +7,9 @@ import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Categories from './pages/Categories'
 import Products from './pages/Products'
+import POS from './pages/POS'
+import Cash from './pages/Cash'
+import Movements from './pages/Movements'
 
 function App() {
   return (
@@ -41,6 +44,36 @@ function App() {
               <RequireAuth>
                 <Layout>
                   <Products />
+                </Layout>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/pos"
+            element={
+              <RequireAuth>
+                <Layout>
+                  <POS />
+                </Layout>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/cash"
+            element={
+              <RequireAuth>
+                <Layout>
+                  <Cash />
+                </Layout>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/movements"
+            element={
+              <RequireAuth>
+                <Layout>
+                  <Movements />
                 </Layout>
               </RequireAuth>
             }

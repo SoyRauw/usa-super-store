@@ -21,7 +21,7 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
       <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow">
         <h1 className="mb-4 text-center text-2xl font-bold">USA Super Store</h1>
         <h2 className="mb-4 text-center text-lg">Iniciar sesión</h2>
@@ -49,14 +49,14 @@ export default function Login() {
           </div>
           <button
             type="submit"
-            className="w-full rounded bg-indigo-600 py-2 text-white hover:bg-indigo-700"
+            className="w-full rounded bg-blue-900 py-2 text-white hover:bg-blue-950"
           >
             Entrar
           </button>
         </form>
         <p className="mt-4 text-center text-sm">
           ¿No tienes cuenta?{' '}
-          <Link to="/register" className="text-indigo-600 hover:underline">
+          <Link to="/register" className="text-blue-900 hover:underline">
             Regístrate
           </Link>
         </p>
