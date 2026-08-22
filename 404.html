@@ -1,14 +1,34 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/usa-super-store/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>usa-super-store</title>
-    <script type="module" crossorigin src="/usa-super-store/assets/index-D1YrBtKO.js"></script>
-    <link rel="stylesheet" crossorigin href="/usa-super-store/assets/index-CbDAAkCp.css">
+    <script type="text/javascript">
+      // SPA redirect for GitHub Pages project site /usa-super-store
+      // Convert path + query + hash into query string and redirect to /
+      // so index.html loads and the React app picks up the original route.
+      var pathSegmentsToKeep = 1
+
+      var l = window.location
+      var repoRoot = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '')
+      var keptPath = l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/')
+      var rest = l.pathname.slice(keptPath.length)
+      if (rest === '') rest = '/'
+
+      var redirect =
+        repoRoot +
+        keptPath +
+        '/?/' +
+        rest
+          .slice(1)
+          .split('/')
+          .join('%2F') +
+        (l.search ? '%26' + l.search.slice(1).split('&').join('%26').replace(/=/g, '%3D') : '') +
+        l.hash
+
+      window.location.replace(redirect)
+    </script>
   </head>
-  <body>
-    <div id="root"></div>
-  </body>
+  <body></body>
 </html>
