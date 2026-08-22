@@ -8,6 +8,7 @@ import {
   FileText,
   BarChart3,
   ClipboardList,
+  Users,
   DollarSign,
   AlertTriangle,
 } from 'lucide-react'
@@ -23,6 +24,7 @@ const cards = [
   { to: '/cash', icon: Banknote, title: 'Caja', desc: 'Apertura y cierre', color: 'bg-amber-50 text-amber-700' },
   { to: '/movements', icon: FileText, title: 'Movimientos', desc: 'Historial de ventas', color: 'bg-slate-100 text-slate-700' },
   { to: '/reports', icon: BarChart3, title: 'Reportes', desc: 'Análisis y exportaciones', color: 'bg-indigo-50 text-indigo-700' },
+  { to: '/customers', icon: Users, title: 'Clientes', desc: 'Base de clientes', color: 'bg-rose-50 text-rose-700' },
 ]
 
 export default function Dashboard() {

@@ -9,6 +9,7 @@ import {
   FileText,
   BarChart3,
   ClipboardList,
+  Users,
   LogOut,
   Menu,
   X,
@@ -26,6 +27,7 @@ const navItems = [
   { to: '/cash', icon: Banknote, label: 'Caja' },
   { to: '/movements', icon: FileText, label: 'Movimientos' },
   { to: '/reports', icon: BarChart3, label: 'Reportes' },
+  { to: '/customers', icon: Users, label: 'Clientes' },
 ]
 
 export default function Layout({ children }) {

@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { useCashSession } from '../hooks/useCashSession'
 import {
   fetchVariantByCode,
+  fetchCustomerByIdNumber,
+  createCustomer,
   createMovement,
   createMovementItems,
   createMovementPayments,
@@ -24,6 +26,7 @@ export default function POS() {
 
   const [items, setItems] = useState([])
   const [payments, setPayments] = useState([])
+  const [customer, setCustomer] = useState({ id: '', id_number: '', name: '', phone: '' })
   const [barcodeBuffer, setBarcodeBuffer] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -47,6 +50,29 @@ export default function POS() {
       barcodeInputRef.current.focus()
     }
   }, [session])
+
+  useEffect(() => {
+    const id = customer.id_number?.trim()
+    if (!id || id.length < 3) return
+
+    const timeout = setTimeout(async () => {
+      try {
+        const found = await fetchCustomerByIdNumber(id)
+        if (found.length === 1) {
+          setCustomer((prev) => ({
+            ...prev,
+            id: found[0].id,
+            name: found[0].name || '',
+            phone: found[0].phone || '',
+          }))
+        }
+      } catch (err) {
+        console.error(err)
+      }
+    }, 300)
+
+    return () => clearTimeout(timeout)
+  }, [customer.id_number])
 
   const addItem = useCallback((product, variant) => {
     const price = variant.price || product.sale_price
@@ -81,6 +107,7 @@ export default function POS() {
   const clearCart = useCallback(() => {
     setItems([])
     setPayments([])
+    setCustomer({ id: '', id_number: '', name: '', phone: '' })
     setError('')
   }, [])
 
@@ -125,6 +152,27 @@ export default function POS() {
     setError('')
 
     try {
+      let customerId = customer?.id || null
+      let customerName = customer?.name?.trim() || null
+      let customerPhone = customer?.phone?.trim() || null
+      const idNumber = customer?.id_number?.trim() || null
+
+      if (customerName || idNumber) {
+        if (idNumber && !customerId) {
+          const found = await fetchCustomerByIdNumber(idNumber)
+          if (found.length === 1) customerId = found[0].id
+        }
+
+        if (!customerId) {
+          const newCustomer = await createCustomer({
+            name: customerName || 'Cliente',
+            id_number: idNumber,
+            phone: customerPhone,
+          })
+          customerId = newCustomer.id
+        }
+      }
+
       const notes = payments
         .filter((p) => p.reference)
         .map((p) => `${PAYMENT_METHODS[p.method]}: ${p.reference}`)
@@ -135,7 +183,9 @@ export default function POS() {
         status: 'pagado',
         user_id: user.id,
         cash_session_id: session.id,
-        customer_name: null,
+        customer_id: customerId,
+        customer_name: customerName,
+        customer_phone: customerPhone,
         payment_method: payments.length === 1 ? payments[0].method : 'multiple',
         total_amount: total,
         notes: notes || null,
@@ -256,6 +306,8 @@ export default function POS() {
                 subtotal={subtotal}
                 total={total}
                 payments={payments}
+                customer={customer}
+                onCustomerChange={setCustomer}
                 onUpdateQty={updateQuantity}
                 onRemove={removeItem}
                 onClear={clearCart}

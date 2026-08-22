@@ -88,6 +88,7 @@ export default function Movements() {
               <tr className="border-b text-left text-slate-500">
                 <th className="py-2">Recibo</th>
                 <th className="py-2">Fecha</th>
+                <th className="py-2">Cliente</th>
                 <th className="py-2">Total</th>
                 <th className="py-2">Método</th>
                 <th className="py-2 text-right">Acciones</th>
@@ -99,6 +100,9 @@ export default function Movements() {
                   <td className="py-2 font-medium">#{m.id.slice(0, 8)}</td>
                   <td className="py-2">
                     {new Date(m.created_at).toLocaleString()}
+                  </td>
+                  <td className="py-2 text-slate-600">
+                    {m.customer_name || '—'}
                   </td>
                   <td className="py-2 font-semibold">
                     {formatMoney(m.total_amount)}

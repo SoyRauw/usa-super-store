@@ -12,6 +12,7 @@ import Cash from './pages/Cash'
 import Movements from './pages/Movements'
 import Reports from './pages/Reports'
 import Inventory from './pages/Inventory'
+import Customers from './pages/Customers'
 
 function App() {
   return (
@@ -96,6 +97,16 @@ function App() {
               <RequireAuth>
                 <Layout>
                   <Inventory />
+                </Layout>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/customers"
+            element={
+              <RequireAuth>
+                <Layout>
+                  <Customers />
                 </Layout>
               </RequireAuth>
             }

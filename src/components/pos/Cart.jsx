@@ -1,12 +1,26 @@
-import { ShoppingBag, Trash2, Minus, Plus } from 'lucide-react'
+import { ShoppingBag, Trash2, Minus, Plus, User, CreditCard, Phone } from 'lucide-react'
 import { formatMoney } from '../../lib/api'
 import { formatVariantLabel } from '../../lib/sku'
 
-export default function Cart({ items, subtotal, total, payments, onUpdateQty, onRemove, onClear, onPay, disabled, error }) {
+export default function Cart({
+  items,
+  subtotal,
+  total,
+  payments,
+  customer,
+  onCustomerChange,
+  onUpdateQty,
+  onRemove,
+  onClear,
+  onPay,
+  disabled,
+  error,
+}) {
   const totalPaid = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0)
   const difference = totalPaid - total
   const isComplete = totalPaid >= total && items.length > 0
   const isMissing = totalPaid < total && items.length > 0
+  const customerDraft = customer || { id: '', id_number: '', name: '', phone: '' }
 
   return (
     <div className="card flex h-full flex-col !p-0">
@@ -15,6 +29,50 @@ export default function Cart({ items, subtotal, total, payments, onUpdateQty, on
           <ShoppingBag size={20} className="text-blue-700" />
           Venta actual
         </h3>
+      </div>
+
+      <div className="border-b border-slate-100 bg-slate-50 p-4">
+        <h4 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-slate-500">
+          <User size={16} /> Cliente
+        </h4>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-500">Cédula / RIF</label>
+            <div className="flex items-center gap-2">
+              <CreditCard size={14} className="text-slate-400" />
+              <input
+                value={customerDraft.id_number || ''}
+                onChange={(e) => onCustomerChange({ ...customerDraft, id_number: e.target.value })}
+                placeholder="V-12345678"
+                className="input"
+                disabled={disabled}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-500">Teléfono</label>
+            <div className="flex items-center gap-2">
+              <Phone size={14} className="text-slate-400" />
+              <input
+                value={customerDraft.phone || ''}
+                onChange={(e) => onCustomerChange({ ...customerDraft, phone: e.target.value })}
+                placeholder="0414-0000000"
+                className="input"
+                disabled={disabled}
+              />
+            </div>
+          </div>
+          <div className="sm:col-span-2">
+            <label className="mb-1 block text-xs font-medium text-slate-500">Nombre</label>
+            <input
+              value={customerDraft.name || ''}
+              onChange={(e) => onCustomerChange({ ...customerDraft, name: e.target.value })}
+              placeholder="Nombre del cliente"
+              className="input"
+              disabled={disabled}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
