@@ -5,6 +5,8 @@ import Layout from './components/Layout'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
+import Categories from './pages/Categories'
+import Products from './pages/Products'
 
 function App() {
   return (
@@ -19,6 +21,26 @@ function App() {
               <RequireAuth>
                 <Layout>
                   <Dashboard />
+                </Layout>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/categories"
+            element={
+              <RequireAuth>
+                <Layout>
+                  <Categories />
+                </Layout>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/products"
+            element={
+              <RequireAuth>
+                <Layout>
+                  <Products />
                 </Layout>
               </RequireAuth>
             }

@@ -13,10 +13,21 @@ export default function Layout({ children }) {
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
       <header className="bg-white shadow">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <Link to="/" className="text-xl font-bold text-indigo-600">
             USA Super Store
           </Link>
+          <nav className="flex flex-wrap items-center gap-4">
+            <Link to="/" className="text-sm hover:text-indigo-600">
+              Dashboard
+            </Link>
+            <Link to="/categories" className="text-sm hover:text-indigo-600">
+              Categorías
+            </Link>
+            <Link to="/products" className="text-sm hover:text-indigo-600">
+              Productos
+            </Link>
+          </nav>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">{user?.email}</span>
             <button
