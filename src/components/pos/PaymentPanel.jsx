@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { Banknote, Smartphone, DollarSign, ArrowRightLeft, CreditCard } from 'lucide-react'
-import { PAYMENT_METHODS, formatMoney } from '../../lib/api'
+import { PAYMENT_METHODS } from '../../lib/api'
+import styles from './PaymentPanel.module.css'
 
 const METHOD_CONFIG = {
   efectivo: { icon: Banknote },
@@ -33,55 +34,62 @@ export default function PaymentPanel({ totalAmount, payments, onChange }) {
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className={styles.panel}>
       {Object.entries(PAYMENT_METHODS)
         .filter(([key]) => key !== 'multiple')
         .map(([method, label]) => {
           const payment = getPayment(method)
           const Icon = METHOD_CONFIG[method]?.icon || DollarSign
           return (
-            <div key={method} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <label className="mb-1.5 flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <Icon size={16} className="text-blue-700" />
-                {label}
-              </label>
-              <input
-                type="number"
-                min={0}
-                step="0.01"
-                placeholder="0.00"
-                value={payment.amount}
-                onChange={(e) => updatePayment(method, 'amount', e.target.value)}
-                className="input"
-              />
+            <div key={method}>
+              <div className={styles.paymentRow}>
+                <span className={styles.methodLabel}>
+                  <Icon size={14} /> {label}
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  placeholder="0.00"
+                  value={payment.amount}
+                  onChange={(e) => updatePayment(method, 'amount', e.target.value)}
+                  className={styles.input}
+                />
+              </div>
               {parseFloat(payment.amount) > 0 && (
                 <input
                   type="text"
-                  placeholder={`Referencia ${label.toLowerCase()}`}
+                  placeholder={`Referencia ${label.toLowerCase()} (opcional)`}
                   value={payment.reference}
                   onChange={(e) => updatePayment(method, 'reference', e.target.value)}
-                  className="input mt-2 text-xs"
+                  className={styles.referenceInput}
                 />
               )}
             </div>
           )
         })}
 
-      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 sm:col-span-2 lg:col-span-3">
-        <div className="flex justify-between text-sm">
-          <span className="text-slate-600">Total a pagar</span>
-          <span className="font-semibold">{formatMoney(totalAmount)}</span>
+      <div className={styles.summary}>
+        <div className={styles.summaryRow}>
+          <span className={styles.summaryLabel}>Total a pagar</span>
+          <span className={styles.summaryValue}>${totalAmount.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-slate-600">Total pagado</span>
-          <span className="font-semibold">{formatMoney(totalPaid)}</span>
+        <div className={styles.summaryRow}>
+          <span className={styles.summaryLabel}>Total pagado</span>
+          <span className={styles.summaryValue}>${totalPaid.toFixed(2)}</span>
         </div>
-        <div className="mt-2 flex justify-between border-t border-blue-200 pt-2 text-base font-bold">
-          <span className={difference >= 0 ? 'text-green-700' : 'text-red-700'}>
-            {difference >= 0 ? 'Vuelto' : 'Faltante'}
-          </span>
-          <span className={difference >= 0 ? 'text-green-700' : 'text-red-700'}>
-            {formatMoney(Math.abs(difference))}
+        <div className={styles.summaryRow}>
+          <span className={styles.summaryLabel}>{difference >= 0 ? 'Vuelto' : 'Faltante'}</span>
+          <span
+            className={`${styles.summaryValue} ${
+              difference === 0
+                ? styles.summaryValueSuccess
+                : difference > 0
+                ? styles.summaryValueWarning
+                : styles.summaryValueDanger
+            }`}
+          >
+            ${Math.abs(difference).toFixed(2)}
           </span>
         </div>
       </div>

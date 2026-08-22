@@ -17,8 +17,8 @@ import { getErrorMessage } from '../lib/errors'
 import ConfirmModal from '../components/ConfirmModal'
 import ProductSearch from '../components/pos/ProductSearch'
 import Cart from '../components/pos/Cart'
-import PaymentPanel from '../components/pos/PaymentPanel'
 import ReceiptView, { printReceipt } from '../components/pos/ReceiptView'
+import styles from './POS.module.css'
 
 export default function POS() {
   const { user } = useAuth()
@@ -241,24 +241,24 @@ export default function POS() {
 
   if (sessionLoading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        Cargando caja...
+      <div className={styles.page}>
+        <div className="flex h-full items-center justify-center text-slate-500">
+          Cargando caja...
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-7xl">
-      <div className="mb-6 flex items-center justify-between">
+    <div className={styles.page}>
+      <div className={styles.topBar}>
         <div>
-          <h1 className="text-3xl font-semibold text-blue-950">Punto de Venta</h1>
-          <p className="text-slate-500">Escanea o busca productos para vender</p>
+          <h1 className={styles.pageTitle}>Punto de Venta</h1>
+          <p className={styles.pageSubtitle}>Escanea o busca productos para vender</p>
         </div>
         <div
-          className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium ${
-            session
-              ? 'bg-green-100 text-green-800'
-              : 'bg-red-100 text-red-800'
+          className={`${styles.sessionBadge} ${
+            session ? styles.sessionOpen : styles.sessionClosed
           }`}
         >
           {session ? <LockOpen size={16} /> : <Lock size={16} />}
@@ -267,45 +267,45 @@ export default function POS() {
       </div>
 
       {!session ? (
-        <div className="card flex flex-col items-center justify-center py-16 text-center">
-          <Lock size={64} className="mb-4 text-slate-300" />
-          <h2 className="mb-2 text-2xl text-blue-950">No hay caja abierta</h2>
-          <p className="text-slate-500">
-            Ve a <strong>Caja</strong> y abre un turno para poder vender.
-          </p>
+        <div className={styles.noSession}>
+          <Lock size={64} className={styles.noSessionIcon} />
+          <h2 className={styles.noSessionTitle}>No hay caja abierta</h2>
+          <p>Ve a <strong>Caja</strong> y abre un turno para poder vender.</p>
         </div>
       ) : (
         <>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              const code = barcodeBuffer.trim()
-              setBarcodeBuffer('')
-              if (code) handleBarcodeScan(code)
-            }}
-            className="mb-4"
-          >
-            <input
-              ref={barcodeInputRef}
-              type="text"
-              value={barcodeBuffer}
-              onChange={(e) => setBarcodeBuffer(e.target.value)}
-              placeholder="Escanea el código de barras o SKU y presiona Enter..."
-              className="input"
-              disabled={submitting}
-            />
-          </form>
+          <div className={styles.barcodeRow}>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                const code = barcodeBuffer.trim()
+                setBarcodeBuffer('')
+                if (code) handleBarcodeScan(code)
+              }}
+            >
+              <input
+                ref={barcodeInputRef}
+                type="text"
+                value={barcodeBuffer}
+                onChange={(e) => setBarcodeBuffer(e.target.value)}
+                placeholder="Escanea el código de barras o SKU y presiona Enter..."
+                className={styles.barcodeInput}
+                disabled={submitting}
+              />
+            </form>
+          </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <div className="card h-[calc(100vh-280px)] min-h-[400px]">
+          <div className={styles.layout}>
+            <div className={styles.leftPanel}>
               <ProductSearch onAdd={addItem} />
             </div>
-            <div className="h-[calc(100vh-280px)] min-h-[400px]">
+            <div className={styles.rightPanel}>
               <Cart
                 items={items}
                 subtotal={subtotal}
                 total={total}
                 payments={payments}
+                onPaymentsChange={setPayments}
                 customer={customer}
                 onCustomerChange={setCustomer}
                 onUpdateQty={updateQuantity}
@@ -316,14 +316,6 @@ export default function POS() {
                 error={error}
               />
             </div>
-          </div>
-
-          <div className="card mt-4">
-            <PaymentPanel
-              totalAmount={total}
-              payments={payments}
-              onChange={setPayments}
-            />
           </div>
         </>
       )}
@@ -361,8 +353,8 @@ export default function POS() {
       </ConfirmModal>
 
       {completedSale && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="flex items-center gap-2 text-xl text-green-700">
                 <CheckCircle size={22} /> Venta completada

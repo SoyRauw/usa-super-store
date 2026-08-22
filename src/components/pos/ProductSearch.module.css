@@ -1,0 +1,120 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.searchWrap {
+  position: relative;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 1rem 1rem 1rem 3rem;
+  font-size: 1rem;
+  border: 2px solid rgba(0, 0, 0, 0.08);
+  border-radius: 0.85rem;
+  background: white;
+  transition: border-color 0.15s;
+  color: var(--color-dark);
+  outline: none;
+}
+
+.searchInput:focus {
+  border-color: var(--color-primary);
+}
+
+.searchIcon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-dark-soft);
+}
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.productCard {
+  background: white;
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.productCard:hover {
+  border-color: var(--color-primary-light);
+  background: #eff6ff;
+  box-shadow: 0 4px 14px rgba(30, 64, 175, 0.08);
+}
+
+.productInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.productName {
+  font-weight: 700;
+  color: var(--color-dark);
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+.productMeta {
+  font-size: 0.75rem;
+  color: var(--color-dark-soft);
+  margin: 0;
+}
+
+.productPrice {
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  font-size: 1rem;
+  margin: 0;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  color: var(--color-dark-soft);
+  text-align: center;
+  gap: 0.75rem;
+}
+
+.emptyState svg {
+  opacity: 0.4;
+}
+
+.emptyState p,
+.emptyText {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-dark-soft);
+}
