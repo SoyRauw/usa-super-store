@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Plus } from 'lucide-react'
 import ProductForm from '../components/ProductForm'
 import {
   fetchProducts,
@@ -7,6 +8,7 @@ import {
   updateProduct,
   deleteProduct,
   isLowStock,
+  formatMoney,
 } from '../lib/api'
 
 export default function Products() {
@@ -86,39 +88,49 @@ export default function Products() {
   }
 
   return (
-    <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Productos</h1>
-        <button
-          onClick={handleNew}
-          className="rounded bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
-        >
-          Nuevo producto
+    <div className="mx-auto max-w-6xl">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="pageHeader mb-0">
+          <h1>Productos</h1>
+          <p>Inventario, precios y stock</p>
+        </div>
+        <button onClick={handleNew} className="btn btnPrimary">
+          <Plus size={18} /> Nuevo producto
         </button>
       </div>
 
-      {error && <p className="mb-3 text-red-600">{error}</p>}
+      {error && <p className="mb-4 rounded-md bg-red-50 p-3 text-red-700">{error}</p>}
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        <input
-          placeholder="Buscar nombre, barcode o SKU..."
-          value={filters.search}
-          onChange={(e) => updateFilter('search', e.target.value)}
-          className="rounded border px-3 py-2"
-        />
-        <select
-          value={filters.categoryId}
-          onChange={(e) => updateFilter('categoryId', e.target.value)}
-          className="rounded border px-3 py-2"
-        >
-          <option value="">Todas las categorías</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        <label className="flex items-center gap-2 rounded border bg-white px-3 py-2">
+      <div className="card mb-5 flex flex-wrap items-end gap-3">
+        <div className="min-w-[200px] flex-1">
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Buscar
+          </label>
+          <input
+            placeholder="Nombre, barcode o SKU..."
+            value={filters.search}
+            onChange={(e) => updateFilter('search', e.target.value)}
+            className="input"
+          />
+        </div>
+        <div className="min-w-[160px]">
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Categoría
+          </label>
+          <select
+            value={filters.categoryId}
+            onChange={(e) => updateFilter('categoryId', e.target.value)}
+            className="input"
+          >
+            <option value="">Todas</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <label className="flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm">
           <input
             type="checkbox"
             checked={filters.lowStock}
@@ -129,8 +141,8 @@ export default function Products() {
       </div>
 
       {showForm && (
-        <div className="mb-6 rounded bg-white p-4 shadow">
-          <h2 className="mb-3 text-lg font-semibold">
+        <div className="card mb-5">
+          <h2 className="mb-4 text-lg">
             {editing ? 'Editar producto' : 'Nuevo producto'}
           </h2>
           <ProductForm
@@ -146,47 +158,43 @@ export default function Products() {
       )}
 
       {loading ? (
-        <p>Cargando...</p>
+        <p className="text-slate-500">Cargando...</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse bg-white shadow">
+        <div className="card tableWrap">
+          <table className="table">
             <thead>
-              <tr className="bg-gray-100 text-left">
-                <th className="border-b px-4 py-2">Nombre</th>
-                <th className="border-b px-4 py-2">Categoría</th>
-                <th className="border-b px-4 py-2">SKU</th>
-                <th className="border-b px-4 py-2">Stock</th>
-                <th className="border-b px-4 py-2">Precio</th>
-                <th className="border-b px-4 py-2 text-right">Acciones</th>
+              <tr>
+                <th>Nombre</th>
+                <th>Categoría</th>
+                <th>SKU</th>
+                <th>Stock</th>
+                <th>Precio</th>
+                <th className="text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {products.map((p) => (
-                <tr key={p.id} className="border-b">
-                  <td className="px-4 py-2">{p.name}</td>
-                  <td className="px-4 py-2">{p.categories?.name}</td>
-                  <td className="px-4 py-2">{p.sku}</td>
-                  <td className="px-4 py-2">
+                <tr key={p.id}>
+                  <td className="font-medium">{p.name}</td>
+                  <td className="text-slate-600">{p.categories?.name}</td>
+                  <td className="font-mono text-xs text-slate-500">{p.sku}</td>
+                  <td>
                     {p.stock}
                     {isLowStock(p.stock) && (
-                      <span className="ml-2 rounded bg-red-100 px-2 py-0.5 text-xs text-red-700">
-                        Bajo
-                      </span>
+                      <span className="badge badgeDanger ml-2">Bajo</span>
                     )}
                   </td>
-                  <td className="px-4 py-2">
-                    ${parseFloat(p.sale_price).toFixed(2)}
-                  </td>
-                  <td className="px-4 py-2 text-right">
+                  <td className="font-semibold">{formatMoney(p.sale_price)}</td>
+                  <td className="text-right">
                     <button
                       onClick={() => handleEdit(p)}
-                      className="mr-2 text-indigo-600 hover:underline"
+                      className="link mr-3"
                     >
                       Editar
                     </button>
                     <button
                       onClick={() => handleDelete(p.id)}
-                      className="text-red-600 hover:underline"
+                      className="font-medium text-red-600 hover:text-red-800"
                     >
                       Eliminar
                     </button>
@@ -195,7 +203,7 @@ export default function Products() {
               ))}
               {products.length === 0 && (
                 <tr>
-                  <td colSpan="6" className="px-4 py-4 text-center text-gray-500">
+                  <td colSpan="6" className="py-6 text-center text-slate-500">
                     No hay productos que coincidan.
                   </td>
                 </tr>

@@ -301,7 +301,7 @@ export default function POS() {
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setConfirmOpen(false)}
-                className="btn btn-ghost"
+                className="btn btnGhost"
                 disabled={submitting}
               >
                 Cancelar
@@ -309,7 +309,7 @@ export default function POS() {
               <button
                 onClick={executePay}
                 disabled={submitting}
-                className="btn btn-primary"
+                className="btn btnPrimary"
               >
                 {submitting ? 'Procesando...' : 'Confirmar venta'}
               </button>
@@ -344,7 +344,7 @@ export default function POS() {
 
             <button
               onClick={() => printReceipt(completedSale)}
-              className="btn btn-primary mt-4 w-full"
+              className="btn btnPrimary mt-4 w-full"
             >
               <Printer size={16} /> Imprimir / Guardar PDF
             </button>

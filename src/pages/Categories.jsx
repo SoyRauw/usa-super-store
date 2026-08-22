@@ -63,69 +63,82 @@ export default function Categories() {
   }
 
   return (
-    <div>
-      <h1 className="mb-4 text-2xl font-bold">Categorías</h1>
-      {error && <p className="mb-3 text-red-600">{error}</p>}
-      <form onSubmit={handleSubmit} className="mb-6 flex flex-wrap gap-2">
-        <input
-          type="text"
-          placeholder="Nueva categoría"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="rounded border px-3 py-2"
-          required
-        />
-        <button
-          type="submit"
-          className="rounded bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
-        >
-          {editing ? 'Actualizar' : 'Agregar'}
-        </button>
-        {editing && (
-          <button
-            type="button"
-            onClick={() => {
-              setEditing(null)
-              setName('')
-            }}
-            className="rounded bg-gray-300 px-4 py-2 hover:bg-gray-400"
-          >
-            Cancelar
+    <div className="mx-auto max-w-3xl">
+      <div className="pageHeader">
+        <h1>Categorías</h1>
+        <p>Administra las categorías de productos</p>
+      </div>
+
+      {error && <p className="mb-4 rounded-md bg-red-50 p-3 text-red-700">{error}</p>}
+
+      <div className="card mb-6">
+        <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
+          <div className="min-w-[220px] flex-1">
+            <label className="mb-1 block text-sm font-medium text-slate-600">
+              {editing ? 'Editar categoría' : 'Nueva categoría'}
+            </label>
+            <input
+              type="text"
+              placeholder="Nombre de la categoría"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="input"
+              required
+            />
+          </div>
+          <button type="submit" className="btn btnPrimary">
+            {editing ? 'Actualizar' : 'Agregar'}
           </button>
-        )}
-      </form>
+          {editing && (
+            <button
+              type="button"
+              onClick={() => { setEditing(null); setName('') }}
+              className="btn btnGhost"
+            >
+              Cancelar
+            </button>
+          )}
+        </form>
+      </div>
 
       {loading ? (
-        <p>Cargando...</p>
+        <p className="text-slate-500">Cargando...</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse bg-white shadow">
+        <div className="card tableWrap">
+          <table className="table">
             <thead>
-              <tr className="bg-gray-100 text-left">
-                <th className="border-b px-4 py-2">Nombre</th>
-                <th className="border-b px-4 py-2 text-right">Acciones</th>
+              <tr>
+                <th>Nombre</th>
+                <th className="text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {categories.map((cat) => (
-                <tr key={cat.id} className="border-b">
-                  <td className="px-4 py-2">{cat.name}</td>
-                  <td className="px-4 py-2 text-right">
+                <tr key={cat.id}>
+                  <td className="font-medium">{cat.name}</td>
+                  <td className="text-right">
                     <button
                       onClick={() => handleEdit(cat)}
-                      className="mr-2 text-indigo-600 hover:underline"
+                      className="link mr-3"
                     >
                       Editar
                     </button>
                     <button
                       onClick={() => handleDelete(cat.id)}
-                      className="text-red-600 hover:underline"
+                      className="font-medium text-red-600 hover:text-red-800"
                     >
                       Eliminar
                     </button>
                   </td>
                 </tr>
               ))}
+              {categories.length === 0 && (
+                <tr>
+                  <td colSpan="2" className="py-6 text-center text-slate-500">
+                    No hay categorías registradas.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

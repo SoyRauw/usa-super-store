@@ -7,9 +7,9 @@ export default function ReceiptView({ movement, items, payments, subtotal, total
   const invoiceId = movement?.id?.slice(0, 8) || '—'
 
   return (
-    <div className="rounded-lg border border-dashed border-slate-300 bg-white p-5 font-mono text-sm">
+    <div className="printReceipt rounded-lg border border-dashed border-slate-300 bg-white p-5 text-sm">
       <div className="mb-4 border-b border-dashed border-slate-300 pb-4 text-center">
-        <div className="font-display text-2xl font-bold uppercase tracking-wide text-blue-950">USA Super Store</div>
+        <div className="text-2xl font-bold uppercase tracking-wide text-blue-950">USA Super Store</div>
         <div className="text-slate-500">Recibo de venta</div>
       </div>
 
@@ -37,7 +37,7 @@ export default function ReceiptView({ movement, items, payments, subtotal, total
       </div>
 
       <div className="mb-4 border-b border-dashed border-slate-300 pb-4">
-        <div className="flex justify-between"><span>Subtotal</span><strong>{formatMoney(subtotal)}</strong></div>
+        <div className="flex justify-between"><span className="text-slate-600">Subtotal</span><strong>{formatMoney(subtotal)}</strong></div>
         <div className="flex justify-between text-lg font-bold text-blue-950"><span>Total</span><span>{formatMoney(total)}</span></div>
       </div>
 

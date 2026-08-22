@@ -13,6 +13,7 @@ import {
   ShoppingBag,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import styles from './Layout.module.css'
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -35,14 +36,18 @@ export default function Layout({ children }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className={styles.page}>
       {/* Mobile header */}
-      <div className="fixed left-0 right-0 top-0 z-40 flex items-center justify-between bg-blue-950 px-4 py-3 text-white lg:hidden">
-        <div className="flex items-center gap-2 font-display text-lg font-semibold">
-          <ShoppingBag size={20} />
+      <div className={styles.mobileHeader}>
+        <div className={styles.mobileLogo}>
+          <ShoppingBag size={22} />
           <span>USA Super Store</span>
         </div>
-        <button onClick={() => setMenuOpen(!menuOpen)}>
+        <button
+          className={styles.hamburger}
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
+        >
           {menuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
@@ -50,23 +55,22 @@ export default function Layout({ children }) {
       {/* Overlay */}
       {menuOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className={styles.overlay}
           onClick={() => setMenuOpen(false)}
+          aria-hidden="true"
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed bottom-0 left-0 top-0 z-50 w-56 flex-col bg-blue-950 text-white transition-transform lg:translate-x-0 ${
-          menuOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`${styles.sidebar} ${menuOpen ? styles.sidebarOpen : ''}`}
       >
-        <div className="flex items-center gap-3 border-b border-white/10 px-6 py-5 font-display text-xl font-semibold">
-          <ShoppingBag size={22} className="text-red-500" />
+        <div className={styles.sidebarLogo}>
+          <ShoppingBag size={22} />
           <span>USA Super Store</span>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
+        <nav className={styles.sidebarNav}>
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = location.pathname === item.to
@@ -75,10 +79,8 @@ export default function Layout({ children }) {
                 key={item.to}
                 to={item.to}
                 onClick={() => setMenuOpen(false)}
-                className={`mb-1 flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-blue-900 text-white'
-                    : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                className={`${styles.navItem} ${
+                  isActive ? styles.navActive : ''
                 }`}
               >
                 <Icon size={18} />
@@ -88,12 +90,9 @@ export default function Layout({ children }) {
           })}
         </nav>
 
-        <div className="border-t border-white/10 p-4">
-          <p className="mb-2 truncate text-xs text-slate-400">{user?.email}</p>
-          <button
-            onClick={handleLogout}
-            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/5 hover:text-red-400"
-          >
+        <div>
+          <p className={styles.userEmail}>{user?.email}</p>
+          <button className={styles.logoutBtn} onClick={handleLogout}>
             <LogOut size={18} />
             Cerrar sesión
           </button>
@@ -101,9 +100,7 @@ export default function Layout({ children }) {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 lg:ml-56 lg:mt-0">
-        <div className="mt-14 p-4 lg:mt-0 lg:p-8">{children}</div>
-      </main>
+      <main className={styles.main}>{children}</main>
     </div>
   )
 }

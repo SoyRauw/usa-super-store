@@ -151,7 +151,7 @@ export default function Movements() {
                   createdAt: selected.created_at,
                 })
               }
-              className="btn btn-primary mt-4 w-full"
+              className="btn btnPrimary mt-4 w-full"
             >
               <Printer size={16} /> Imprimir / Guardar PDF
             </button>

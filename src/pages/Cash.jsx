@@ -180,7 +180,7 @@ export default function Cash() {
             <button
               type="submit"
               disabled={submitting || !!openErrors || openAmount === ''}
-              className="btn btn-primary"
+              className="btn btnPrimary"
             >
               {submitting ? 'Abriendo...' : 'Abrir caja'}
             </button>
@@ -284,7 +284,7 @@ export default function Cash() {
               <button
                 type="submit"
                 disabled={submitting || !!closeErrors || closeAmount === ''}
-                className="btn btn-secondary"
+                className="btn btnSecondary"
               >
                 {submitting ? 'Cerrando...' : 'Cerrar caja'}
               </button>
@@ -379,7 +379,7 @@ export default function Cash() {
                 onClick={confirmType === 'open' ? executeOpen : executeClose}
                 disabled={submitting}
                 className={
-                  confirmType === 'open' ? 'btn btn-primary' : 'btn btn-secondary'
+                  confirmType === 'open' ? 'btn btnPrimary' : 'btn btnSecondary'
                 }
               >
                 {submitting ? 'Procesando...' : 'Confirmar'}

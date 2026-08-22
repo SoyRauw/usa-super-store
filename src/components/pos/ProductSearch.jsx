@@ -8,9 +8,7 @@ export default function ProductSearch({ onAdd }) {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      loadProducts(search)
-    }, 250)
+    const timeout = setTimeout(() => loadProducts(search), 250)
     return () => clearTimeout(timeout)
   }, [search])
 
@@ -29,10 +27,7 @@ export default function ProductSearch({ onAdd }) {
   return (
     <div className="flex h-full flex-col">
       <div className="relative mb-4">
-        <Search
-          size={18}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-        />
+        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
         <input
           type="text"
           value={search}
@@ -43,13 +38,13 @@ export default function ProductSearch({ onAdd }) {
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto pr-1">
         {loading ? (
           <p className="text-slate-500">Buscando...</p>
         ) : products.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-slate-400">
-            <Package size={40} />
-            <p className="mt-2">No se encontraron productos</p>
+          <div className="flex flex-col items-center justify-center py-10 text-slate-400">
+            <Package size={44} />
+            <p className="mt-3 text-sm">No se encontraron productos</p>
           </div>
         ) : (
           <div className="grid gap-2">
@@ -57,19 +52,13 @@ export default function ProductSearch({ onAdd }) {
               <button
                 key={p.id}
                 onClick={() => onAdd(p)}
-                className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-3 text-left transition-colors hover:border-blue-300 hover:bg-blue-50"
+                className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-3 text-left transition-all hover:border-blue-400 hover:bg-blue-50 hover:shadow-sm"
               >
                 <div>
                   <p className="font-medium text-slate-800">{p.name}</p>
-                  <p className="text-xs text-slate-500">
-                    {p.sku} · Stock: {p.stock}
-                  </p>
+                  <p className="text-xs text-slate-500">{p.sku} · Stock: {p.stock}</p>
                 </div>
-                <div className="text-right">
-                  <p className="font-semibold text-blue-950">
-                    {formatMoney(p.sale_price)}
-                  </p>
-                </div>
+                <p className="font-semibold text-blue-900">{formatMoney(p.sale_price)}</p>
               </button>
             ))}
           </div>
