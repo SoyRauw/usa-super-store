@@ -12,23 +12,57 @@ function normalize(str) {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toUpperCase()
-    .replace(/[^A-Z0-9\s]/g, '')
+    .replace(/[^A-Z0-9]/g, '')
     .trim()
 }
 
-export function getCategoryPrefix(categoryName) {
+/**
+ * Genera un prefijo de categoría basado en las primeras letras del nombre.
+ * Regla:
+ *  1. Si hay mapeo hardcodeado, úsalo.
+ *  2. Toma las primeras 3 letras del nombre normalizado.
+ *  3. Si colisiona con existingPrefixes, alarga con la siguiente letra del nombre.
+ *  4. Si se acaban las letras del nombre, añade un número incremental.
+ *
+ * Ejemplos:
+ *   getCategoryPrefix('Bebidas')               -> 'BEB'
+ *   getCategoryPrefix('Bebidas', ['BEB'])      -> 'BEBI'
+ *   getCategoryPrefix('Bebidas', ['BEB','BEBI'])-> 'BEBID'
+ *   getCategoryPrefix('Foo', ['FOO','FOOO'])   -> 'FOO2'
+ */
+export function getCategoryPrefix(categoryName, existingPrefixes = []) {
   const key = (categoryName || '').trim().toUpperCase()
-  return CATEGORY_PREFIXES[key] || generateFallbackPrefix(key)
-}
-
-function generateFallbackPrefix(name) {
-  const words = normalize(name).split(/\s+/).filter(Boolean)
-  let prefix = ''
-  for (const word of words) {
-    if (prefix.length >= 3) break
-    prefix += word[0]
+  const hardcoded = CATEGORY_PREFIXES[key]
+  if (hardcoded && !existingPrefixes.includes(hardcoded)) {
+    return hardcoded
   }
-  return prefix.padEnd(3, 'X').toUpperCase()
+
+  const normalized = normalize(categoryName)
+  if (!normalized) return ''
+
+  const baseCandidates = []
+  for (let i = 3; i <= normalized.length; i++) {
+    baseCandidates.push(normalized.slice(0, i))
+  }
+  // Si el nombre tiene menos de 3 caracteres, usar el nombre completo y rellenar con X
+  if (baseCandidates.length === 0) {
+    baseCandidates.push(normalized.padEnd(3, 'X'))
+  }
+
+  // Buscar el primer candidato que no colisione
+  for (const candidate of baseCandidates) {
+    if (!existingPrefixes.includes(candidate)) {
+      return candidate
+    }
+  }
+
+  // Desempate final: agregar número incremental
+  const last = baseCandidates[baseCandidates.length - 1]
+  let suffix = 2
+  while (existingPrefixes.includes(`${last}${suffix}`)) {
+    suffix++
+  }
+  return `${last}${suffix}`
 }
 
 export function generateProductCode(categoryPrefix, existingCodes = []) {

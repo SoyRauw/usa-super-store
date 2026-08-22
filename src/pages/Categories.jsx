@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { getCategoryPrefix } from '../lib/sku'
 import {
   fetchCategories,
@@ -60,13 +60,23 @@ export default function Categories() {
     })
   }
 
+  const existingPrefixes = useMemo(
+    () => categories.filter((c) => c.id !== editing?.id).map((c) => c.prefix),
+    [categories, editing]
+  )
+
+  const suggestedPrefix = useMemo(
+    () => getCategoryPrefix(form.name.trim(), existingPrefixes),
+    [form.name, existingPrefixes]
+  )
+
   async function handleSubmit(e) {
     e.preventDefault()
     setError(null)
 
     const payload = {
       name: form.name.trim(),
-      prefix: form.prefix.trim().toUpperCase() || getCategoryPrefix(form.name.trim()),
+      prefix: form.prefix.trim().toUpperCase() || getCategoryPrefix(form.name.trim(), existingPrefixes),
       size_label: form.size_label.trim() || DEFAULT_SIZE_LABEL,
       size_options: form.size_options
         .split(',')
@@ -138,7 +148,7 @@ export default function Categories() {
               type="text"
               value={form.prefix}
               onChange={(e) => setForm({ ...form, prefix: e.target.value.toUpperCase() })}
-              placeholder={getCategoryPrefix(form.name)}
+              placeholder={suggestedPrefix}
               className="input"
             />
           </div>
