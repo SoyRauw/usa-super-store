@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Printer, X, Calendar } from 'lucide-react'
 import { fetchMovements, PAYMENT_METHODS, formatMoney } from '../lib/api'
+import { getErrorMessage } from '../lib/errors'
 import ReceiptView, { printReceipt } from '../components/pos/ReceiptView'
 
 export default function Movements() {
@@ -25,7 +26,7 @@ export default function Movements() {
       })
       setMovements(data)
     } catch (err) {
-      setError(err.message)
+      setError(getErrorMessage(err))
     } finally {
       setLoading(false)
     }

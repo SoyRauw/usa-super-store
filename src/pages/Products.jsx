@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Plus } from 'lucide-react'
-import ProductForm from '../components/ProductForm'
+import { Plus, Tag, Download } from 'lucide-react'
+import ProductFormModal from '../components/ProductFormModal'
 import ConfirmModal from '../components/ConfirmModal'
 import {
   fetchProducts,
@@ -8,9 +8,10 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
-  isLowStock,
+  getProductStock,
   formatMoney,
 } from '../lib/api'
+import { exportProductLabels } from '../lib/labelExport'
 import { getErrorMessage } from '../lib/errors'
 
 export default function Products() {
@@ -29,17 +30,13 @@ export default function Products() {
 
   useEffect(() => {
     loadData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters])
 
   async function loadData() {
     setLoading(true)
     setError(null)
     try {
-      const [prods, cats] = await Promise.all([
-        fetchProducts(filters),
-        fetchCategories(),
-      ])
+      const [prods, cats] = await Promise.all([fetchProducts(filters), fetchCategories()])
       setProducts(prods)
       setCategories(cats)
     } catch (err) {
@@ -49,13 +46,13 @@ export default function Products() {
     }
   }
 
-  async function handleSave(product) {
+  async function handleSave({ product, variants }) {
     setError(null)
     try {
       if (editing) {
-        await updateProduct(editing.id, product)
+        await updateProduct(editing.id, { product, variants })
       } else {
-        await createProduct(product)
+        await createProduct({ product, variants })
       }
       setShowForm(false)
       setEditing(null)
@@ -96,7 +93,7 @@ export default function Products() {
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="pageHeader mb-0">
           <h1>Productos</h1>
-          <p>Inventario, precios y stock</p>
+          <p>Modelos padre y variantes</p>
         </div>
         <button onClick={handleNew} className="btn btnPrimary">
           <Plus size={18} /> Nuevo producto
@@ -108,29 +105,38 @@ export default function Products() {
       <ConfirmModal
         isOpen={!!deleteId}
         title="Eliminar producto"
-        message="¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer."
+        message="¿Eliminar este producto y todas sus variantes? Esta acción no se puede deshacer."
         confirmText="Eliminar"
         confirmVariant="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}
       />
 
+      {showForm && (
+        <ProductFormModal
+          product={editing}
+          categories={categories}
+          allProducts={products}
+          onSave={handleSave}
+          onClose={() => {
+            setShowForm(false)
+            setEditing(null)
+          }}
+        />
+      )}
+
       <div className="card mb-5 flex flex-wrap items-end gap-3">
         <div className="min-w-[200px] flex-1">
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Buscar
-          </label>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Buscar</label>
           <input
-            placeholder="Nombre, barcode o SKU..."
+            placeholder="Nombre o ID del producto..."
             value={filters.search}
             onChange={(e) => updateFilter('search', e.target.value)}
             className="input"
           />
         </div>
         <div className="min-w-[160px]">
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Categoría
-          </label>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Categoría</label>
           <select
             value={filters.categoryId}
             onChange={(e) => updateFilter('categoryId', e.target.value)}
@@ -138,9 +144,7 @@ export default function Products() {
           >
             <option value="">Todas</option>
             {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
+              <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
         </div>
@@ -150,26 +154,9 @@ export default function Products() {
             checked={filters.lowStock}
             onChange={(e) => updateFilter('lowStock', e.target.checked)}
           />
-          Stock bajo (≤2)
+          Stock bajo
         </label>
       </div>
-
-      {showForm && (
-        <div className="card mb-5">
-          <h2 className="mb-4 text-lg">
-            {editing ? 'Editar producto' : 'Nuevo producto'}
-          </h2>
-          <ProductForm
-            product={editing}
-            existingProducts={products}
-            onSave={handleSave}
-            onCancel={() => {
-              setShowForm(false)
-              setEditing(null)
-            }}
-          />
-        </div>
-      )}
 
       {loading ? (
         <p className="text-slate-500">Cargando...</p>
@@ -178,47 +165,63 @@ export default function Products() {
           <table className="table">
             <thead>
               <tr>
-                <th>Nombre</th>
+                <th>Producto</th>
                 <th>Categoría</th>
-                <th>SKU</th>
-                <th>Stock</th>
-                <th>Precio</th>
+                <th>Precio base</th>
+                <th>Variantes</th>
+                <th>Stock total</th>
+                <th>Estado</th>
                 <th className="text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {products.map((p) => (
-                <tr key={p.id}>
-                  <td className="font-medium">{p.name}</td>
-                  <td className="text-slate-600">{p.categories?.name}</td>
-                  <td className="font-mono text-xs text-slate-500">{p.sku}</td>
-                  <td>
-                    {p.stock}
-                    {isLowStock(p.stock) && (
-                      <span className="badge badgeDanger ml-2">Bajo</span>
-                    )}
-                  </td>
-                  <td className="font-semibold">{formatMoney(p.sale_price)}</td>
-                  <td className="text-right">
-                    <button
-                      onClick={() => handleEdit(p)}
-                      className="link mr-3"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => setDeleteId(p.id)}
-                      className="font-medium text-red-600 hover:text-red-800"
-                    >
-                      Eliminar
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {products.map((p) => {
+                const totalStock = getProductStock(p)
+                const variants = p.product_variants || []
+                return (
+                  <tr key={p.id}>
+                    <td className="font-medium">
+                      <div>{p.name}</div>
+                      <div className="flex items-center gap-1 text-xs text-slate-500">
+                        <Tag size={10} /> {p.id}
+                      </div>
+                    </td>
+                    <td className="text-slate-600">{p.categories?.name}</td>
+                    <td className="font-semibold">{formatMoney(p.sale_price)}</td>
+                    <td>{variants.length}</td>
+                    <td>
+                      {totalStock}
+                      {variants.some((v) => v.stock <= 2) && (
+                        <span className="badge badgeDanger ml-2">Bajo</span>
+                      )}
+                    </td>
+                    <td>
+                      <span className={`badge ${p.active ? 'badgeSuccess' : 'badgeDanger'}`}>
+                        {p.active ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </td>
+                    <td className="text-right">
+                      <button onClick={() => handleEdit(p)} className="link mr-3">Editar</button>
+                      <button
+                        onClick={() => exportProductLabels(p)}
+                        className="link mr-3"
+                      >
+                        <Download size={14} /> Etiquetas
+                      </button>
+                      <button
+                        onClick={() => setDeleteId(p.id)}
+                        className="font-medium text-red-600 hover:text-red-800"
+                      >
+                        Eliminar
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
               {products.length === 0 && (
                 <tr>
-                  <td colSpan="6" className="py-6 text-center text-slate-500">
-                    No hay productos que coincidan.
+                  <td colSpan="7" className="py-6 text-center text-slate-500">
+                    No hay productos.
                   </td>
                 </tr>
               )}

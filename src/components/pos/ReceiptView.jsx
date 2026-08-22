@@ -1,4 +1,5 @@
 import { PAYMENT_METHODS, formatMoney } from '../../lib/api'
+import { formatVariantLabel } from '../../lib/sku'
 
 export default function ReceiptView({ movement, items, payments, subtotal, total, createdAt }) {
   const date = createdAt ? new Date(createdAt) : new Date()
@@ -22,18 +23,24 @@ export default function ReceiptView({ movement, items, payments, subtotal, total
 
       <div className="mb-4 border-b border-dashed border-slate-300 pb-4">
         <div className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">Productos</div>
-        {items?.map((item, i) => (
-          <div key={i} className="mb-2">
-            <div className="flex gap-2 font-medium">
-              <span className="min-w-[24px]">{item.quantity}x</span>
-              <span>{item.product?.name || item.products?.name}</span>
+        {items?.map((item, i) => {
+          const variantLabel = formatVariantLabel(item.variant || item.product_variants, item.product?.categories?.size_label)
+          return (
+            <div key={i} className="mb-2">
+              <div className="flex gap-2 font-medium">
+                <span className="min-w-[24px]">{item.quantity}x</span>
+                <span>{item.product?.name || item.products?.name}</span>
+              </div>
+              {variantLabel && variantLabel !== 'Estándar' && (
+                <div className="ml-7 text-xs text-slate-500">{variantLabel}</div>
+              )}
+              <div className="ml-7 flex justify-between text-xs text-slate-500">
+                <span>{formatMoney(item.price || item.unit_price || 0)} c/u</span>
+                <strong>{formatMoney((item.price || item.unit_price || 0) * item.quantity)}</strong>
+              </div>
             </div>
-            <div className="ml-7 flex justify-between text-xs text-slate-500">
-              <span>{formatMoney(item.price || item.unit_price || 0)} c/u</span>
-              <strong>{formatMoney((item.price || item.unit_price || 0) * item.quantity)}</strong>
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       <div className="mb-4 border-b border-dashed border-slate-300 pb-4">
@@ -84,9 +91,10 @@ function getReceiptHTML({ movement, items, payments, subtotal, total, createdAt 
 
   const productsHTML = (items || []).map(item => {
     const name = item.product?.name || item.products?.name || '—'
+    const variantLabel = formatVariantLabel(item.variant || item.product_variants, item.product?.categories?.size_label)
     const unitPrice = item.price || item.unit_price || 0
     const qty = item.quantity || 1
-    return `<div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #f0f0f0;"><div style="display:flex;gap:6px;font-weight:500;color:#1f2937;"><span style="font-weight:700;min-width:24px;">${qty}x</span><span>${name}</span></div><div style="display:flex;justify-content:space-between;margin-top:4px;margin-left:30px;font-size:13px;"><span>${formatMoney(unitPrice)} c/u</span><strong>${formatMoney(unitPrice * qty)}</strong></div></div>`
+    return `<div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #f0f0f0;"><div style="display:flex;gap:6px;font-weight:500;color:#1f2937;"><span style="font-weight:700;min-width:24px;">${qty}x</span><span>${name}</span></div>${variantLabel && variantLabel !== 'Estándar' ? `<div style="margin-left:30px;font-size:12px;color:#6b7280;">${variantLabel}</div>` : ''}<div style="display:flex;justify-content:space-between;margin-top:4px;margin-left:30px;font-size:13px;"><span>${formatMoney(unitPrice)} c/u</span><strong>${formatMoney(unitPrice * qty)}</strong></div></div>`
   }).join('')
 
   const paymentsHTML = (payments || []).length

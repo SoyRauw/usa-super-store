@@ -1,5 +1,6 @@
 import { ShoppingBag, Trash2, Minus, Plus } from 'lucide-react'
 import { formatMoney } from '../../lib/api'
+import { formatVariantLabel } from '../../lib/sku'
 
 export default function Cart({ items, subtotal, total, payments, onUpdateQty, onRemove, onClear, onPay, disabled, error }) {
   const totalPaid = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0)
@@ -24,37 +25,41 @@ export default function Cart({ items, subtotal, total, payments, onUpdateQty, on
           </div>
         ) : (
           <div className="space-y-3">
-            {items.map((item, index) => (
-              <div key={`${item.product.id}-${index}`} className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 p-3">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-slate-800">{item.product.name}</p>
-                  <p className="text-xs text-slate-500">{formatMoney(item.price)} c/u</p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <button
-                      onClick={() => onUpdateQty(index, item.quantity - 1)}
-                      disabled={item.quantity <= 1}
-                      className="rounded bg-white p-1.5 shadow-sm transition-colors hover:bg-slate-100 disabled:opacity-40"
-                    >
-                      <Minus size={12} />
-                    </button>
-                    <span className="w-6 text-center text-sm font-semibold">{item.quantity}</span>
-                    <button
-                      onClick={() => onUpdateQty(index, item.quantity + 1)}
-                      disabled={item.quantity >= item.product.stock}
-                      className="rounded bg-white p-1.5 shadow-sm transition-colors hover:bg-slate-100 disabled:opacity-40"
-                    >
-                      <Plus size={12} />
+            {items.map((item, index) => {
+              const variantLabel = formatVariantLabel(item.variant, item.product?.categories?.size_label)
+              return (
+                <div key={`${item.variant.id}-${index}`} className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 p-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-slate-800">{item.product.name}</p>
+                    <p className="text-xs text-slate-500">{variantLabel}</p>
+                    <p className="text-xs text-slate-500">{formatMoney(item.price)} c/u</p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <button
+                        onClick={() => onUpdateQty(index, item.quantity - 1)}
+                        disabled={item.quantity <= 1}
+                        className="rounded bg-white p-1.5 shadow-sm transition-colors hover:bg-slate-100 disabled:opacity-40"
+                      >
+                        <Minus size={12} />
+                      </button>
+                      <span className="w-6 text-center text-sm font-semibold">{item.quantity}</span>
+                      <button
+                        onClick={() => onUpdateQty(index, item.quantity + 1)}
+                        disabled={item.quantity >= item.variant.stock}
+                        className="rounded bg-white p-1.5 shadow-sm transition-colors hover:bg-slate-100 disabled:opacity-40"
+                      >
+                        <Plus size={12} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="ml-4 text-right">
+                    <p className="font-semibold text-blue-900">{formatMoney(item.price * item.quantity)}</p>
+                    <button onClick={() => onRemove(index)} className="mt-1 text-red-600 hover:text-red-800">
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </div>
-                <div className="ml-4 text-right">
-                  <p className="font-semibold text-blue-900">{formatMoney(item.price * item.quantity)}</p>
-                  <button onClick={() => onRemove(index)} className="mt-1 text-red-600 hover:text-red-800">
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

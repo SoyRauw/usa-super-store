@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Calendar, FileSpreadsheet, FileText, TrendingUp, CreditCard, Package, AlertTriangle } from 'lucide-react'
 import { fetchReportMovements, fetchLowStockProducts, PAYMENT_METHODS, formatMoney } from '../lib/api'
 import { getErrorMessage } from '../lib/errors'
+import { formatVariantLabel } from '../lib/sku'
 import {
   exportSalesByDayToExcel,
   exportByMethodToExcel,
@@ -126,8 +127,7 @@ export default function Reports() {
     movementItems.forEach((item) => {
       const id = item.product_id
       const name = item.products?.name || '—'
-      const sku = item.products?.sku || '—'
-      if (!map[id]) map[id] = { id, name, sku, quantity: 0, total: 0 }
+      if (!map[id]) map[id] = { id, name, quantity: 0, total: 0 }
       map[id].quantity += item.quantity || 0
       map[id].total += (item.quantity || 0) * (parseFloat(item.unit_price) || 0)
     })
@@ -136,12 +136,31 @@ export default function Reports() {
       .slice(0, 20)
   }, [movementItems])
 
+  const lowStockVariants = useMemo(() => {
+    const rows = []
+    lowStock.forEach((p) => {
+      ;(p.product_variants || [])
+        .filter((v) => (v.stock || 0) <= 2)
+        .forEach((v) => {
+          rows.push({
+            id: v.id,
+            name: p.name,
+            sku: v.sku,
+            stock: v.stock,
+            category: p.categories?.name,
+            variantLabel: formatVariantLabel(v, p.categories?.size_label),
+          })
+        })
+    })
+    return rows.sort((a, b) => a.stock - b.stock)
+  }, [lowStock])
+
   function handleExportExcel() {
     const filename = `reporte_${activeTab}_${startDate}_${endDate}`
     if (activeTab === 'day') exportSalesByDayToExcel(salesByDay, filename)
     if (activeTab === 'method') exportByMethodToExcel(byMethod, filename)
     if (activeTab === 'top') exportTopProductsToExcel(topProducts, filename)
-    if (activeTab === 'stock') exportLowStockToExcel(lowStock, filename)
+    if (activeTab === 'stock') exportLowStockToExcel(lowStockVariants, filename)
   }
 
   function handleExportPDF() {
@@ -343,20 +362,25 @@ export default function Reports() {
                 </tr>
               </thead>
               <tbody>
-                {lowStock.map((p) => (
-                  <tr key={p.id}>
-                    <td>{p.name}</td>
-                    <td className="font-mono text-xs text-slate-500">{p.sku}</td>
-                    <td>{p.categories?.name}</td>
+                {lowStockVariants.map((r) => (
+                  <tr key={r.id}>
                     <td>
-                      <span className="badge badgeDanger">{p.stock}</span>
+                      {r.name}
+                      {r.variantLabel && r.variantLabel !== 'Estándar' && (
+                        <div className="text-xs text-slate-500">{r.variantLabel}</div>
+                      )}
+                    </td>
+                    <td className="font-mono text-xs text-slate-500">{r.sku}</td>
+                    <td>{r.category}</td>
+                    <td>
+                      <span className="badge badgeDanger">{r.stock}</span>
                     </td>
                   </tr>
                 ))}
-                {lowStock.length === 0 && (
+                {lowStockVariants.length === 0 && (
                   <tr>
                     <td colSpan="4" className="py-6 text-center text-slate-500">
-                      No hay productos con stock bajo.
+                      No hay variantes con stock bajo.
                     </td>
                   </tr>
                 )}

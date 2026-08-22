@@ -3,11 +3,11 @@ import { Lock, LockOpen, CheckCircle, Printer, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useCashSession } from '../hooks/useCashSession'
 import {
-  fetchProductByCode,
+  fetchVariantByCode,
   createMovement,
   createMovementItems,
   createMovementPayments,
-  updateProductStock,
+  updateVariantStock,
   formatMoney,
   PAYMENT_METHODS,
 } from '../lib/api'
@@ -48,17 +48,18 @@ export default function POS() {
     }
   }, [session])
 
-  const addItem = useCallback((product) => {
+  const addItem = useCallback((product, variant) => {
+    const price = variant.price || product.sale_price
     setItems((prev) => {
-      const existingIndex = prev.findIndex((i) => i.product.id === product.id)
+      const existingIndex = prev.findIndex((i) => i.variant.id === variant.id)
       if (existingIndex >= 0) {
         const item = prev[existingIndex]
-        if (item.quantity >= product.stock) return prev
+        if (item.quantity >= item.variant.stock) return prev
         return prev.map((i, idx) =>
           idx === existingIndex ? { ...i, quantity: i.quantity + 1 } : i
         )
       }
-      return [...prev, { product, quantity: 1, price: product.sale_price }]
+      return [...prev, { product, variant, quantity: 1, price }]
     })
   }, [])
 
@@ -66,7 +67,7 @@ export default function POS() {
     setItems((prev) => {
       if (quantity <= 0) return prev.filter((_, i) => i !== index)
       const item = prev[index]
-      if (quantity > item.product.stock) return prev
+      if (quantity > item.variant.stock) return prev
       return prev.map((i, idx) =>
         idx === index ? { ...i, quantity } : i
       )
@@ -90,11 +91,11 @@ export default function POS() {
 
     setError('')
     try {
-      const product = await fetchProductByCode(cleanCode)
-      if (product) {
-        addItem(product)
+      const variant = await fetchVariantByCode(cleanCode)
+      if (variant) {
+        addItem(variant.products, variant)
       } else {
-        setError(`No se encontró producto con código: ${cleanCode}`)
+        setError(`No se encontró variante con código: ${cleanCode}`)
       }
     } catch (e) {
       console.error(e)
@@ -144,6 +145,7 @@ export default function POS() {
         items.map((item) => ({
           movement_id: movement.id,
           product_id: item.product.id,
+          variant_id: item.variant.id,
           quantity: item.quantity,
           unit_price: item.price,
         }))
@@ -163,9 +165,9 @@ export default function POS() {
       }
 
       for (const item of items) {
-        await updateProductStock(
-          item.product.id,
-          item.product.stock - item.quantity
+        await updateVariantStock(
+          item.variant.id,
+          item.variant.stock - item.quantity
         )
       }
 

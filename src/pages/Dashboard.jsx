@@ -7,6 +7,7 @@ import {
   Banknote,
   FileText,
   BarChart3,
+  ClipboardList,
   DollarSign,
   AlertTriangle,
 } from 'lucide-react'
@@ -17,6 +18,7 @@ import { getErrorMessage } from '../lib/errors'
 const cards = [
   { to: '/categories', icon: FolderTree, title: 'Categorías', desc: 'Administrar categorías', color: 'bg-blue-50 text-blue-700' },
   { to: '/products', icon: Package, title: 'Productos', desc: 'Inventario y precios', color: 'bg-sky-50 text-sky-700' },
+  { to: '/inventory', icon: ClipboardList, title: 'Inventario', desc: 'Ajustar stock', color: 'bg-orange-50 text-orange-700' },
   { to: '/pos', icon: Store, title: 'POS', desc: 'Nueva venta', color: 'bg-green-50 text-green-700' },
   { to: '/cash', icon: Banknote, title: 'Caja', desc: 'Apertura y cierre', color: 'bg-amber-50 text-amber-700' },
   { to: '/movements', icon: FileText, title: 'Movimientos', desc: 'Historial de ventas', color: 'bg-slate-100 text-slate-700' },

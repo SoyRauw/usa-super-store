@@ -7,13 +7,22 @@ const CATEGORY_PREFIXES = {
   'HOME LUXURY': 'HOM',
 }
 
+function normalize(str) {
+  return (str || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9\s]/g, '')
+    .trim()
+}
+
 export function getCategoryPrefix(categoryName) {
-  const key = categoryName.trim().toUpperCase()
+  const key = (categoryName || '').trim().toUpperCase()
   return CATEGORY_PREFIXES[key] || generateFallbackPrefix(key)
 }
 
 function generateFallbackPrefix(name) {
-  const words = name.split(/\s+/).filter(Boolean)
+  const words = normalize(name).split(/\s+/).filter(Boolean)
   let prefix = ''
   for (const word of words) {
     if (prefix.length >= 3) break
@@ -22,41 +31,46 @@ function generateFallbackPrefix(name) {
   return prefix.padEnd(3, 'X').toUpperCase()
 }
 
-export function generateSku(categoryName, productName, existingProducts = []) {
-  const prefix = getCategoryPrefix(categoryName)
-  const upperName = productName.trim().toUpperCase()
+export function generateProductCode(categoryPrefix, existingCodes = []) {
+  if (!categoryPrefix) return ''
+  const regex = new RegExp(`^${categoryPrefix}-(\\d{3,})$`)
+  let max = 0
+  existingCodes.forEach((code) => {
+    const match = code?.match(regex)
+    if (match) max = Math.max(max, parseInt(match[1], 10))
+  })
+  return `${categoryPrefix}-${String(max + 1).padStart(3, '0')}`
+}
 
-  const samePrefixProducts = existingProducts.filter((p) =>
-    p.sku?.toUpperCase().startsWith(`${prefix}-`)
-  )
-
-  const maxProductNumber = samePrefixProducts.reduce((max, p) => {
-    const parts = p.sku?.split('-') || []
-    if (parts.length === 3) {
-      const n = parseInt(parts[1], 10)
-      return isNaN(n) ? max : Math.max(max, n)
+export function generateVariantCode(productId, existingVariantCodes = []) {
+  if (!productId) return ''
+  const prefix = `${productId}-`
+  let max = 0
+  existingVariantCodes.forEach((code) => {
+    if (code?.startsWith(prefix)) {
+      const suffix = code.slice(prefix.length)
+      const num = suffix.split('-')[0]
+      if (/^\d+$/.test(num)) {
+        max = Math.max(max, parseInt(num, 10))
+      }
     }
-    return max
-  }, 0)
+  })
+  return `${productId}-${String(max + 1).padStart(3, '0')}`
+}
 
-  const productNumber = maxProductNumber + 1
+export function formatVariantLabel(variant, sizeLabel = 'Talla') {
+  const parts = []
+  if (variant?.color) parts.push(variant.color)
+  if (variant?.variant_name) parts.push(variant.variant_name)
+  if (variant?.size) parts.push(`${sizeLabel} ${variant.size}`)
+  if (parts.length === 0) return 'Estándar'
+  return parts.join(' / ')
+}
 
-  const sameNameProducts = existingProducts.filter(
-    (p) => p.name?.trim().toUpperCase() === upperName
-  )
-
-  const maxVariant = sameNameProducts.reduce((max, p) => {
-    const parts = p.sku?.split('-') || []
-    if (parts.length === 3) {
-      const v = parseInt(parts[2], 10)
-      return isNaN(v) ? max : Math.max(max, v)
-    }
-    return max
-  }, 0)
-
-  const variant = maxVariant + 1
-
-  return `${prefix}-${String(productNumber).padStart(3, '0')}-${String(
-    variant
-  ).padStart(3, '0')}`
+export function calculateSalePrice({ cost, tax, shipping_cost, profit_margin }) {
+  const c = parseFloat(cost) || 0
+  const t = parseFloat(tax) || 0
+  const s = parseFloat(shipping_cost) || 0
+  const m = parseFloat(profit_margin) || 0
+  return c + t + s + c * (m / 100)
 }
