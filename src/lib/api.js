@@ -201,7 +201,7 @@ export async function updateVariantStock(variantId, newStock) {
 }
 
 // Movements / sales
-const MOVEMENT_SELECT = '*, movement_items(*, products(name, id), product_variants(sku, color, variant_name, size)), movement_payments(*)'
+const MOVEMENT_SELECT = '*, movement_items(*, products(name, id, category_id, categories(name)), product_variants(sku, color, variant_name, size)), movement_payments(*), profiles(name, email)'
 
 export async function createMovement(movement) {
   const { data, error } = await supabase.from('movements').insert(movement).select().single()
@@ -235,16 +235,30 @@ export async function fetchMovementById(id) {
 }
 
 // Reports
-export async function fetchReportMovements({ startDate, endDate } = {}) {
+export async function fetchReportMovements({ startDate, endDate, userId, method } = {}) {
   let query = supabase
     .from('movements')
     .select(MOVEMENT_SELECT)
     .eq('movement_type', 'venta')
     .eq('status', 'pagado')
-    .order('created_at', { ascending: true })
+    .order('created_at', { ascending: false })
   if (startDate) query = query.gte('created_at', startDate)
   if (endDate) query = query.lte('created_at', endDate)
+  if (userId) query = query.eq('user_id', userId)
+  if (method) {
+    if (method === 'multiple') {
+      query = query.eq('payment_method', 'multiple')
+    } else {
+      query = query.or(`payment_method.eq.${method},movement_payments.method.eq.${method}`)
+    }
+  }
   const { data, error } = await query
+  if (error) throw error
+  return data || []
+}
+
+export async function fetchProfiles() {
+  const { data, error } = await supabase.from('profiles').select('id, name, email').order('name')
   if (error) throw error
   return data || []
 }

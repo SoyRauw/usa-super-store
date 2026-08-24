@@ -1,22 +1,22 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Calendar, FileSpreadsheet, FileText, TrendingUp, CreditCard, Package, AlertTriangle } from 'lucide-react'
-import { fetchReportMovements, fetchLowStockProducts, PAYMENT_METHODS, formatMoney } from '../lib/api'
+import {
+  Calendar,
+  FileSpreadsheet,
+  FileText,
+  TrendingUp,
+  CreditCard,
+  Package,
+  DollarSign,
+  ShoppingBag,
+} from 'lucide-react'
+import { fetchReportMovements, fetchProfiles, PAYMENT_METHODS, formatMoney } from '../lib/api'
 import { getErrorMessage } from '../lib/errors'
 import { formatVariantLabel } from '../lib/sku'
 import {
-  exportSalesByDayToExcel,
-  exportByMethodToExcel,
-  exportTopProductsToExcel,
-  exportLowStockToExcel,
-  exportSalesByDayToPDF,
+  exportMovementsToExcel,
+  exportMovementsToPDF,
 } from '../lib/reports'
-
-const TABS = [
-  { id: 'day', label: 'Ventas por día', icon: TrendingUp },
-  { id: 'method', label: 'Por método de pago', icon: CreditCard },
-  { id: 'top', label: 'Más vendidos', icon: Package },
-  { id: 'stock', label: 'Bajo stock', icon: AlertTriangle },
-]
+import styles from './Reports.module.css'
 
 function formatDateInput(date) {
   return date ? new Date(date).toISOString().split('T')[0] : ''
@@ -40,10 +40,11 @@ export default function Reports() {
   const today = formatDateInput(new Date())
   const [startDate, setStartDate] = useState(today)
   const [endDate, setEndDate] = useState(today)
-  const [activeTab, setActiveTab] = useState('day')
+  const [userId, setUserId] = useState('')
+  const [method, setMethod] = useState('')
   const [movements, setMovements] = useState([])
   const [movementItems, setMovementItems] = useState([])
-  const [lowStock, setLowStock] = useState([])
+  const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -52,19 +53,18 @@ export default function Reports() {
       setLoading(true)
       setError(null)
       try {
-        const [movs, low] = await Promise.all([
+        const [movs, profiles] = await Promise.all([
           fetchReportMovements({
             startDate: toStartOfDay(startDate),
             endDate: toEndOfDay(endDate),
+            userId: userId || undefined,
+            method: method || undefined,
           }),
-          fetchLowStockProducts(),
+          fetchProfiles(),
         ])
-
         setMovements(movs)
-        setLowStock(low)
-
-        const allItems = movs.flatMap((m) => m.movement_items || [])
-        setMovementItems(allItems)
+        setUsers(profiles)
+        setMovementItems(movs.flatMap((m) => m.movement_items || []))
       } catch (err) {
         setError(getErrorMessage(err))
       } finally {
@@ -73,7 +73,7 @@ export default function Reports() {
     }
 
     loadData()
-  }, [startDate, endDate])
+  }, [startDate, endDate, userId, method])
 
   const summary = useMemo(() => {
     const totalSales = movements.reduce(
@@ -85,19 +85,6 @@ export default function Reports() {
       totalTransactions: movements.length,
       averageTicket: movements.length > 0 ? totalSales / movements.length : 0,
     }
-  }, [movements])
-
-  const salesByDay = useMemo(() => {
-    const map = {}
-    movements.forEach((m) => {
-      const date = new Date(m.created_at).toLocaleDateString('es-VE')
-      if (!map[date]) map[date] = { date, count: 0, total: 0 }
-      map[date].count += 1
-      map[date].total += parseFloat(m.total_amount) || 0
-    })
-    return Object.values(map).sort((a, b) =>
-      new Date(a.date) - new Date(b.date)
-    )
   }, [movements])
 
   const byMethod = useMemo(() => {
@@ -114,8 +101,8 @@ export default function Reports() {
     })
     const total = Object.values(map).reduce((s, v) => s + v, 0)
     return Object.entries(map)
-      .map(([method, amount]) => ({
-        method: PAYMENT_METHODS[method] || method,
+      .map(([methodKey, amount]) => ({
+        method: PAYMENT_METHODS[methodKey] || methodKey,
         amount,
         percent: total > 0 ? (amount / total) * 100 : 0,
       }))
@@ -125,65 +112,76 @@ export default function Reports() {
   const topProducts = useMemo(() => {
     const map = {}
     movementItems.forEach((item) => {
-      const id = item.product_id
-      const name = item.products?.name || '—'
-      if (!map[id]) map[id] = { id, name, quantity: 0, total: 0 }
-      map[id].quantity += item.quantity || 0
-      map[id].total += (item.quantity || 0) * (parseFloat(item.unit_price) || 0)
+      const product = item.products
+      const variant = item.product_variants
+      const name = product?.name || '—'
+      const variantLabel = formatVariantLabel(variant, product?.categories?.size_label)
+      const key = `${product?.id || item.product_id}-${variant?.id || ''}`
+      if (!map[key]) {
+        map[key] = {
+          name,
+          variant: variantLabel,
+          sku: variant?.sku || '',
+          quantity: 0,
+          total: 0,
+        }
+      }
+      map[key].quantity += item.quantity || 0
+      map[key].total += (item.quantity || 0) * (parseFloat(item.unit_price) || 0)
     })
     return Object.values(map)
       .sort((a, b) => b.quantity - a.quantity)
-      .slice(0, 20)
+      .slice(0, 5)
   }, [movementItems])
 
-  const lowStockVariants = useMemo(() => {
-    const rows = []
-    lowStock.forEach((p) => {
-      ;(p.product_variants || [])
-        .filter((v) => (v.stock || 0) <= 2)
-        .forEach((v) => {
-          rows.push({
-            id: v.id,
-            name: p.name,
-            sku: v.sku,
-            stock: v.stock,
-            category: p.categories?.name,
-            variantLabel: formatVariantLabel(v, p.categories?.size_label),
-          })
-        })
+  const byCategory = useMemo(() => {
+    const map = {}
+    movementItems.forEach((item) => {
+      const cat = item.products?.categories?.name || 'Sin categoría'
+      map[cat] = (map[cat] || 0) + (item.quantity || 0) * (parseFloat(item.unit_price) || 0)
     })
-    return rows.sort((a, b) => a.stock - b.stock)
-  }, [lowStock])
+    return Object.entries(map)
+      .map(([category, amount]) => ({ category, amount }))
+      .sort((a, b) => b.amount - a.amount)
+  }, [movementItems])
+
+  function handleToday() {
+    const t = formatDateInput(new Date())
+    setStartDate(t)
+    setEndDate(t)
+  }
 
   function handleExportExcel() {
-    const filename = `reporte_${activeTab}_${startDate}_${endDate}`
-    if (activeTab === 'day') exportSalesByDayToExcel(salesByDay, filename)
-    if (activeTab === 'method') exportByMethodToExcel(byMethod, filename)
-    if (activeTab === 'top') exportTopProductsToExcel(topProducts, filename)
-    if (activeTab === 'stock') exportLowStockToExcel(lowStockVariants, filename)
+    exportMovementsToExcel(movements, `ventas_${startDate}_${endDate}`)
   }
 
   function handleExportPDF() {
-    if (activeTab === 'day') {
-      exportSalesByDayToPDF(salesByDay, summary, `ventas_${startDate}_${endDate}`)
-    } else {
-      alert('PDF disponible por ahora solo para Ventas por día.')
-    }
+    exportMovementsToPDF(movements, summary, `ventas_${startDate}_${endDate}`)
   }
 
   return (
-    <div className="mx-auto max-w-6xl">
-      <div className="pageHeader">
-        <h1>Reportes</h1>
-        <p>Análisis de ventas y estado del inventario</p>
+    <div className={styles.page}>
+      <div className={styles.topBar}>
+        <div className={styles.title}>
+          <h1>Reportes de Ventas</h1>
+          <p>Analiza y exporta tus ventas</p>
+        </div>
+        <div className={styles.actions}>
+          <button onClick={handleExportExcel} className="btn btnOutline">
+            <FileSpreadsheet size={18} /> Excel
+          </button>
+          <button onClick={handleExportPDF} className="btn btnOutline">
+            <FileText size={18} /> PDF
+          </button>
+        </div>
       </div>
 
       {error && <p className="mb-4 rounded-md bg-red-50 p-3 text-red-700">{error}</p>}
 
-      <div className="card mb-5">
-        <div className="mb-4 flex flex-wrap items-end gap-3">
-          <div>
-            <label className="label">Desde</label>
+      <div className={styles.card}>
+        <div className={styles.filters}>
+          <div className={styles.filterField}>
+            <label>Desde</label>
             <div className="flex items-center gap-2">
               <Calendar size={16} className="text-slate-400" />
               <input
@@ -194,8 +192,8 @@ export default function Reports() {
               />
             </div>
           </div>
-          <div>
-            <label className="label">Hasta</label>
+          <div className={styles.filterField}>
+            <label>Hasta</label>
             <div className="flex items-center gap-2">
               <Calendar size={16} className="text-slate-400" />
               <input
@@ -206,181 +204,153 @@ export default function Reports() {
               />
             </div>
           </div>
-          <button
-            onClick={() => {
-              const t = formatDateInput(new Date())
-              setStartDate(t)
-              setEndDate(t)
-            }}
-            className="btn btnOutline"
-          >
+          <div className={styles.filterField}>
+            <label>Cajero</label>
+            <select value={userId} onChange={(e) => setUserId(e.target.value)} className="input">
+              <option value="">Todos</option>
+              {users.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name || u.email || u.id}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className={styles.filterField}>
+            <label>Método de pago</label>
+            <select value={method} onChange={(e) => setMethod(e.target.value)} className="input">
+              <option value="">Todos</option>
+              {Object.entries(PAYMENT_METHODS).map(([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button onClick={handleToday} className="btn btnOutline">
             Hoy
           </button>
-          <div className="ml-auto flex gap-2">
-            <button onClick={handleExportExcel} className="btn btnOutline">
-              <FileSpreadsheet size={18} /> Excel
-            </button>
-            <button onClick={handleExportPDF} className="btn btnOutline">
-              <FileText size={18} /> PDF
-            </button>
-          </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-lg bg-blue-50 p-4">
-            <p className="text-sm text-slate-500">Total ventas</p>
-            <p className="text-2xl font-bold text-blue-900">{formatMoney(summary.totalSales)}</p>
+        <div className={styles.summaryGrid}>
+          <div className={styles.summaryCard}>
+            <DollarSign size={28} className={styles.summaryIcon} />
+            <div>
+              <p className={styles.summaryLabel}>Total ventas</p>
+              <p className={styles.summaryValue}>{formatMoney(summary.totalSales)}</p>
+            </div>
           </div>
-          <div className="rounded-lg bg-blue-50 p-4">
-            <p className="text-sm text-slate-500">Transacciones</p>
-            <p className="text-2xl font-bold text-blue-900">{summary.totalTransactions}</p>
+          <div className={styles.summaryCard}>
+            <ShoppingBag size={28} className={styles.summaryIcon} />
+            <div>
+              <p className={styles.summaryLabel}>Transacciones</p>
+              <p className={styles.summaryValue}>{summary.totalTransactions}</p>
+            </div>
           </div>
-          <div className="rounded-lg bg-blue-50 p-4">
-            <p className="text-sm text-slate-500">Ticket promedio</p>
-            <p className="text-2xl font-bold text-blue-900">{formatMoney(summary.averageTicket)}</p>
+          <div className={styles.summaryCard}>
+            <TrendingUp size={28} className={styles.summaryIcon} />
+            <div>
+              <p className={styles.summaryLabel}>Ticket promedio</p>
+              <p className={styles.summaryValue}>{formatMoney(summary.averageTicket)}</p>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        {TABS.map((tab) => {
-          const Icon = tab.icon
-          const active = activeTab === tab.id
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`btn flex items-center gap-2 ${
-                active ? 'btnPrimary' : 'btnOutline'
-              }`}
-            >
-              <Icon size={16} />
-              {tab.label}
-            </button>
-          )
-        })}
+      <div className={styles.analysisGrid}>
+        <div className={styles.analysisCard}>
+          <h3>
+            <CreditCard size={16} /> Ventas por método
+          </h3>
+          {byMethod.length === 0 ? (
+            <p className={styles.emptyState}>No hay ventas en este período.</p>
+          ) : (
+            byMethod.map((r, i) => (
+              <div key={i} className={styles.listItem}>
+                <span className={styles.listLabel}>{r.method}</span>
+                <div className="text-right">
+                  <span className={styles.listValue}>{formatMoney(r.amount)}</span>
+                  <span className="ml-2 text-xs text-slate-500">{r.percent.toFixed(1)}%</span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className={styles.analysisCard}>
+          <h3>
+            <Package size={16} /> Productos más vendidos
+          </h3>
+          {topProducts.length === 0 ? (
+            <p className={styles.emptyState}>No hay ventas en este período.</p>
+          ) : (
+            topProducts.map((r, i) => (
+              <div key={i} className={styles.listItem}>
+                <div>
+                  <span className={styles.listLabel}>{r.name}</span>
+                  {r.variant && r.variant !== 'Estándar' && (
+                    <p className={styles.variantMeta}>{r.variant}</p>
+                  )}
+                </div>
+                <span className={styles.listValue}>{r.quantity} uds</span>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className={styles.analysisCard}>
+          <h3>
+            <TrendingUp size={16} /> Ventas por categoría
+          </h3>
+          {byCategory.length === 0 ? (
+            <p className={styles.emptyState}>No hay ventas en este período.</p>
+          ) : (
+            byCategory.map((r, i) => (
+              <div key={i} className={styles.listItem}>
+                <span className={styles.listLabel}>{r.category}</span>
+                <span className={styles.listValue}>{formatMoney(r.amount)}</span>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
-      <div className="card">
+      <div className={styles.card}>
+        <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500">
+          Detalle de ventas
+        </h3>
         {loading ? (
           <p className="text-slate-500">Cargando...</p>
-        ) : activeTab === 'day' ? (
-          <div className="tableWrap">
-            <table className="table">
+        ) : (
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
               <thead>
                 <tr>
                   <th>Fecha</th>
-                  <th>Cantidad de ventas</th>
-                  <th>Total</th>
+                  <th>Recibo</th>
+                  <th>Cliente</th>
+                  <th>Método</th>
+                  <th>Descuento</th>
+                  <th className="text-right">Total</th>
                 </tr>
               </thead>
               <tbody>
-                {salesByDay.map((r) => (
-                  <tr key={r.date}>
-                    <td>{r.date}</td>
-                    <td>{r.count}</td>
-                    <td className="font-semibold">{formatMoney(r.total)}</td>
-                  </tr>
-                ))}
-                {salesByDay.length === 0 && (
+                {movements.map((m) => {
+                  const discount = parseFloat(m.discount_amount) || 0
+                  return (
+                    <tr key={m.id}>
+                      <td>{new Date(m.created_at).toLocaleString('es-VE')}</td>
+                      <td className="font-mono text-xs text-slate-500">#{m.id.slice(0, 8)}</td>
+                      <td>{m.customer_name || 'Cliente general'}</td>
+                      <td>{PAYMENT_METHODS[m.payment_method] || m.payment_method || '—'}</td>
+                      <td>{discount > 0 ? formatMoney(discount) : '—'}</td>
+                      <td className={styles.totalCell}>{formatMoney(m.total_amount)}</td>
+                    </tr>
+                  )
+                })}
+                {movements.length === 0 && (
                   <tr>
-                    <td colSpan="3" className="py-6 text-center text-slate-500">
+                    <td colSpan="6" className="py-6 text-center text-slate-500">
                       No hay ventas en este período.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        ) : activeTab === 'method' ? (
-          <div className="tableWrap">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Método de pago</th>
-                  <th>Monto</th>
-                  <th>Porcentaje</th>
-                </tr>
-              </thead>
-              <tbody>
-                {byMethod.map((r, i) => (
-                  <tr key={i}>
-                    <td>{r.method}</td>
-                    <td className="font-semibold">{formatMoney(r.amount)}</td>
-                    <td>{r.percent.toFixed(1)}%</td>
-                  </tr>
-                ))}
-                {byMethod.length === 0 && (
-                  <tr>
-                    <td colSpan="3" className="py-6 text-center text-slate-500">
-                      No hay ventas en este período.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        ) : activeTab === 'top' ? (
-          <div className="tableWrap">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>SKU</th>
-                  <th>Unidades vendidas</th>
-                  <th>Monto total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topProducts.map((r) => (
-                  <tr key={r.id}>
-                    <td>{r.name}</td>
-                    <td className="font-mono text-xs text-slate-500">{r.sku}</td>
-                    <td>{r.quantity}</td>
-                    <td className="font-semibold">{formatMoney(r.total)}</td>
-                  </tr>
-                ))}
-                {topProducts.length === 0 && (
-                  <tr>
-                    <td colSpan="4" className="py-6 text-center text-slate-500">
-                      No hay ventas en este período.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="tableWrap">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>SKU</th>
-                  <th>Categoría</th>
-                  <th>Stock</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lowStockVariants.map((r) => (
-                  <tr key={r.id}>
-                    <td>
-                      {r.name}
-                      {r.variantLabel && r.variantLabel !== 'Estándar' && (
-                        <div className="text-xs text-slate-500">{r.variantLabel}</div>
-                      )}
-                    </td>
-                    <td className="font-mono text-xs text-slate-500">{r.sku}</td>
-                    <td>{r.category}</td>
-                    <td>
-                      <span className="badge badgeDanger">{r.stock}</span>
-                    </td>
-                  </tr>
-                ))}
-                {lowStockVariants.length === 0 && (
-                  <tr>
-                    <td colSpan="4" className="py-6 text-center text-slate-500">
-                      No hay variantes con stock bajo.
                     </td>
                   </tr>
                 )}

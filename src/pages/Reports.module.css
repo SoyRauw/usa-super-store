@@ -1,0 +1,200 @@
+.page {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.topBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.title h1 {
+  font-size: 1.75rem;
+  color: var(--color-primary-dark);
+  margin: 0;
+}
+
+.title p {
+  color: var(--color-dark-soft);
+  margin: 0.25rem 0 0;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid #e2e8f0;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  align-items: flex-end;
+  margin-bottom: 1rem;
+}
+
+.filterField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.filterField label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-dark-soft);
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.summaryCard {
+  background: #eff6ff;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.summaryIcon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.summaryLabel {
+  font-size: 0.85rem;
+  color: var(--color-dark-soft);
+}
+
+.summaryValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+.analysisGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.analysisCard {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid #e2e8f0;
+  padding: 1rem;
+}
+
+.analysisCard h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-dark-soft);
+  margin: 0 0 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.listItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.9rem;
+}
+
+.listItem:last-child {
+  border-bottom: none;
+}
+
+.listLabel {
+  color: var(--color-dark);
+  font-weight: 500;
+}
+
+.listValue {
+  font-weight: 600;
+  color: var(--color-dark);
+}
+
+.variantMeta {
+  font-size: 0.75rem;
+  color: var(--color-dark-soft);
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.table th {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-dark-soft);
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.table td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.totalCell {
+  text-align: right;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+.emptyState {
+  text-align: center;
+  padding: 2rem;
+  color: var(--color-dark-soft);
+}
+
+@media (max-width: 640px) {
+  .topBar {
+    flex-direction: column;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .actions button {
+    flex: 1;
+  }
+}
