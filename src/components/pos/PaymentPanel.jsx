@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Banknote, Smartphone, DollarSign, ArrowRightLeft, CreditCard } from 'lucide-react'
+import { Banknote, Smartphone, DollarSign, ArrowRightLeft, CreditCard, Wallet, Bitcoin } from 'lucide-react'
 import { PAYMENT_METHODS } from '../../lib/api'
 import styles from './PaymentPanel.module.css'
 
@@ -7,6 +7,8 @@ const METHOD_CONFIG = {
   efectivo: { icon: Banknote },
   pago_movil: { icon: Smartphone },
   zelle: { icon: DollarSign },
+  zinli: { icon: Wallet },
+  binance: { icon: Bitcoin },
   transferencia: { icon: ArrowRightLeft },
   punto: { icon: CreditCard },
 }
