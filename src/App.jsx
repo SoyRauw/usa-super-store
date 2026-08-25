@@ -1,9 +1,8 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider } from './context/AuthContext'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { AuthProvider, useAuth } from './context/AuthContext'
 import RequireAuth from './components/RequireAuth'
 import Layout from './components/Layout'
 import Login from './pages/Login'
-import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Categories from './pages/Categories'
 import Products from './pages/Products'
@@ -13,6 +12,20 @@ import Movements from './pages/Movements'
 import Reports from './pages/Reports'
 import Inventory from './pages/Inventory'
 import Customers from './pages/Customers'
+import Users from './pages/Users'
+
+const ADMIN_ROUTES = ['/categories', '/products', '/reports', '/users']
+
+function RoleGuard({ children }) {
+  const { role, loading } = useAuth()
+  const location = useLocation()
+
+  if (loading) return <div className="p-8 text-center">Cargando...</div>
+  if (role === 'vendedor' && ADMIN_ROUTES.some((r) => location.pathname.startsWith(r))) {
+    return <Navigate to="/pos" replace />
+  }
+  return children
+}
 
 function App() {
   return (
@@ -20,14 +33,15 @@ function App() {
       <BrowserRouter basename="/usa-super-store">
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
           <Route
             path="/"
             element={
               <RequireAuth>
-                <Layout>
-                  <Dashboard />
-                </Layout>
+                <RoleGuard>
+                  <Layout>
+                    <Dashboard />
+                  </Layout>
+                </RoleGuard>
               </RequireAuth>
             }
           />
@@ -35,9 +49,11 @@ function App() {
             path="/categories"
             element={
               <RequireAuth>
-                <Layout>
-                  <Categories />
-                </Layout>
+                <RoleGuard>
+                  <Layout>
+                    <Categories />
+                  </Layout>
+                </RoleGuard>
               </RequireAuth>
             }
           />
@@ -45,9 +61,11 @@ function App() {
             path="/products"
             element={
               <RequireAuth>
-                <Layout>
-                  <Products />
-                </Layout>
+                <RoleGuard>
+                  <Layout>
+                    <Products />
+                  </Layout>
+                </RoleGuard>
               </RequireAuth>
             }
           />
@@ -85,9 +103,11 @@ function App() {
             path="/reports"
             element={
               <RequireAuth>
-                <Layout>
-                  <Reports />
-                </Layout>
+                <RoleGuard>
+                  <Layout>
+                    <Reports />
+                  </Layout>
+                </RoleGuard>
               </RequireAuth>
             }
           />
@@ -108,6 +128,18 @@ function App() {
                 <Layout>
                   <Customers />
                 </Layout>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/users"
+            element={
+              <RequireAuth>
+                <RoleGuard>
+                  <Layout>
+                    <Users />
+                  </Layout>
+                </RoleGuard>
               </RequireAuth>
             }
           />

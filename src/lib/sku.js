@@ -103,6 +103,10 @@ export function formatVariantLabel(variant, sizeLabel = 'Peso') {
   return parts.join(' / ')
 }
 
+export function getVariantImage(product, variant) {
+  return variant?.image || product?.image || null
+}
+
 export function calculateSalePrice({ cost, tax, shipping_cost, profit_margin }) {
   const c = parseFloat(cost) || 0
   const t = parseFloat(tax) || 0

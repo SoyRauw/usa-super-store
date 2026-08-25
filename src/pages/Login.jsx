@@ -1,7 +1,16 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { supabase } from '../lib/supabaseClient'
 import { getErrorMessage } from '../lib/errors'
+
+const INTERNAL_EMAIL_DOMAIN = 'usa.local'
+
+function toEmail(value) {
+  const trimmed = value.trim()
+  if (trimmed.includes('@')) return trimmed
+  return `${trimmed}@${INTERNAL_EMAIL_DOMAIN}`
+}
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -14,8 +23,13 @@ export default function Login() {
     e.preventDefault()
     setError(null)
     try {
-      await signIn(email, password)
-      navigate('/')
+      const { user } = await signIn(toEmail(email), password)
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+      navigate(profile?.role === 'admin' ? '/' : '/pos')
     } catch (err) {
       setError(getErrorMessage(err))
     }
@@ -29,13 +43,15 @@ export default function Login() {
         {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium">Correo</label>
+            <label className="block text-sm font-medium">Usuario o correo</label>
             <input
-              type="email"
+              type="text"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="mt-1 w-full rounded border px-3 py-2"
+              placeholder="admin o admin@correo.com"
+              autoComplete="username"
             />
           </div>
           <div>
@@ -46,6 +62,7 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-1 w-full rounded border px-3 py-2"
+              autoComplete="current-password"
             />
           </div>
           <button
@@ -55,12 +72,6 @@ export default function Login() {
             Entrar
           </button>
         </form>
-        <p className="mt-4 text-center text-sm">
-          ¿No tienes cuenta?{' '}
-          <Link to="/register" className="text-blue-900 hover:underline">
-            Regístrate
-          </Link>
-        </p>
       </div>
     </div>
   )

@@ -24,16 +24,14 @@ function formatDateInput(date) {
 
 function toStartOfDay(dateStr) {
   if (!dateStr) return null
-  const d = new Date(dateStr)
-  d.setHours(0, 0, 0, 0)
-  return d.toISOString()
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return new Date(y, m - 1, d, 0, 0, 0, 0).toISOString()
 }
 
 function toEndOfDay(dateStr) {
   if (!dateStr) return null
-  const d = new Date(dateStr)
-  d.setHours(23, 59, 59, 999)
-  return d.toISOString()
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return new Date(y, m - 1, d, 23, 59, 59, 999).toISOString()
 }
 
 export default function Reports() {
@@ -159,12 +157,19 @@ export default function Reports() {
     setEndDate(t)
   }
 
+  const reportFilename = useMemo(() => {
+    if (startDate === endDate) {
+      return `Reporte USA Super Store (${startDate})`
+    }
+    return `Reporte USA Super Store (${startDate} - ${endDate})`
+  }, [startDate, endDate])
+
   function handleExportExcel() {
-    exportMovementsToExcel(movements, `ventas_${startDate}_${endDate}`)
+    exportMovementsToExcel(movements, movementItems, reportFilename)
   }
 
   function handleExportPDF() {
-    exportMovementsToPDF(movements, summary, `ventas_${startDate}_${endDate}`)
+    exportMovementsToPDF(movements, summary, reportFilename)
   }
 
   return (

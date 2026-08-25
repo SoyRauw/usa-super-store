@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Plus, Tag, Download } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Plus, Tag, Download, Search } from 'lucide-react'
 import ProductFormModal from '../components/ProductFormModal'
 import ConfirmModal from '../components/ConfirmModal'
 import {
@@ -15,7 +15,7 @@ import { exportProductLabels } from '../lib/labelExport'
 import { getErrorMessage } from '../lib/errors'
 
 export default function Products() {
-  const [products, setProducts] = useState([])
+  const [allProducts, setAllProducts] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -25,19 +25,20 @@ export default function Products() {
   const [filters, setFilters] = useState({
     search: '',
     categoryId: '',
-    lowStock: false,
+    status: '', // '', 'active', 'inactive'
+    stock: '', // '', 'out', 'low', 'ok'
   })
 
   useEffect(() => {
     loadData()
-  }, [filters])
+  }, [])
 
   async function loadData() {
     setLoading(true)
     setError(null)
     try {
-      const [prods, cats] = await Promise.all([fetchProducts(filters), fetchCategories()])
-      setProducts(prods)
+      const [prods, cats] = await Promise.all([fetchProducts({}), fetchCategories()])
+      setAllProducts(prods)
       setCategories(cats)
     } catch (err) {
       setError(getErrorMessage(err))
@@ -45,6 +46,34 @@ export default function Products() {
       setLoading(false)
     }
   }
+
+  const products = useMemo(() => {
+    const term = filters.search.trim().toLowerCase()
+    return allProducts.filter((p) => {
+      const variants = p.product_variants || []
+      const totalStock = getProductStock(p)
+      const matchesSearch =
+        !term ||
+        p.name.toLowerCase().includes(term) ||
+        p.id.toLowerCase().includes(term) ||
+        variants.some(
+          (v) =>
+            (v.sku || '').toLowerCase().includes(term) ||
+            (v.barcode || '').toLowerCase().includes(term)
+        )
+      const matchesCategory = !filters.categoryId || p.category_id === filters.categoryId
+      const matchesStatus =
+        !filters.status || (filters.status === 'active' ? p.active : !p.active)
+      const matchesStock =
+        !filters.stock ||
+        (filters.stock === 'out'
+          ? totalStock === 0
+          : filters.stock === 'low'
+          ? totalStock > 0 && totalStock < 3
+          : totalStock >= 3)
+      return matchesSearch && matchesCategory && matchesStatus && matchesStock
+    })
+  }, [allProducts, filters])
 
   async function handleSave({ product, variants }) {
     setError(null)
@@ -91,7 +120,7 @@ export default function Products() {
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="pageHeader mb-0">
           <h1>Productos</h1>
-          <p>Modelos padre y variantes</p>
+          <p>{products.length} de {allProducts.length} productos</p>
         </div>
         <button onClick={handleNew} className="btn btnPrimary">
           <Plus size={18} /> Nuevo producto
@@ -114,7 +143,7 @@ export default function Products() {
         <ProductFormModal
           product={editing}
           categories={categories}
-          allProducts={products}
+          allProducts={allProducts}
           onSave={handleSave}
           onClose={() => {
             setShowForm(false)
@@ -125,16 +154,23 @@ export default function Products() {
 
       <div className="card mb-5 flex flex-wrap items-end gap-3">
         <div className="min-w-[200px] flex-1">
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Buscar</label>
-          <input
-            placeholder="Nombre o ID del producto..."
-            value={filters.search}
-            onChange={(e) => updateFilter('search', e.target.value)}
-            className="input"
-          />
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Buscar
+          </label>
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              placeholder="Nombre, ID, SKU o barcode..."
+              value={filters.search}
+              onChange={(e) => updateFilter('search', e.target.value)}
+              className="input w-full pl-9"
+            />
+          </div>
         </div>
         <div className="min-w-[160px]">
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Categoría</label>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Categoría
+          </label>
           <select
             value={filters.categoryId}
             onChange={(e) => updateFilter('categoryId', e.target.value)}
@@ -142,18 +178,41 @@ export default function Products() {
           >
             <option value="">Todas</option>
             {categories.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
             ))}
           </select>
         </div>
-        <label className="flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm">
-          <input
-            type="checkbox"
-            checked={filters.lowStock}
-            onChange={(e) => updateFilter('lowStock', e.target.checked)}
-          />
-          Stock bajo
-        </label>
+        <div className="min-w-[140px]">
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Estado
+          </label>
+          <select
+            value={filters.status}
+            onChange={(e) => updateFilter('status', e.target.value)}
+            className="input"
+          >
+            <option value="">Todos</option>
+            <option value="active">Activos</option>
+            <option value="inactive">Inactivos</option>
+          </select>
+        </div>
+        <div className="min-w-[140px]">
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Stock
+          </label>
+          <select
+            value={filters.stock}
+            onChange={(e) => updateFilter('stock', e.target.value)}
+            className="input"
+          >
+            <option value="">Todos</option>
+            <option value="out">Sin stock</option>
+            <option value="low">Bajo</option>
+            <option value="ok">OK</option>
+          </select>
+        </div>
       </div>
 
       {loading ? (
@@ -199,11 +258,10 @@ export default function Products() {
                       </span>
                     </td>
                     <td className="text-right">
-                      <button onClick={() => handleEdit(p)} className="link mr-3">Editar</button>
-                      <button
-                        onClick={() => exportProductLabels(p)}
-                        className="link mr-3"
-                      >
+                      <button onClick={() => handleEdit(p)} className="link mr-3">
+                        Editar
+                      </button>
+                      <button onClick={() => exportProductLabels(p)} className="link mr-3">
                         <Download size={14} /> Etiquetas
                       </button>
                       <button

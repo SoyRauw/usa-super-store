@@ -10,6 +10,7 @@ import {
   BarChart3,
   ClipboardList,
   Users,
+  Shield,
   LogOut,
   Menu,
   X,
@@ -18,23 +19,26 @@ import {
 import { useAuth } from '../context/AuthContext'
 import styles from './Layout.module.css'
 
-const navItems = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/categories', icon: FolderTree, label: 'Categorías' },
-  { to: '/products', icon: Package, label: 'Productos' },
-  { to: '/inventory', icon: ClipboardList, label: 'Inventario' },
-  { to: '/pos', icon: Store, label: 'POS' },
-  { to: '/cash', icon: Banknote, label: 'Caja' },
-  { to: '/movements', icon: FileText, label: 'Movimientos' },
-  { to: '/reports', icon: BarChart3, label: 'Reportes' },
-  { to: '/customers', icon: Users, label: 'Clientes' },
+const allNavItems = [
+  { to: '/', icon: LayoutDashboard, label: 'Dashboard', adminOnly: true },
+  { to: '/categories', icon: FolderTree, label: 'Categorías', adminOnly: true },
+  { to: '/products', icon: Package, label: 'Productos', adminOnly: true },
+  { to: '/inventory', icon: ClipboardList, label: 'Inventario', adminOnly: false },
+  { to: '/pos', icon: Store, label: 'POS', adminOnly: false },
+  { to: '/cash', icon: Banknote, label: 'Caja', adminOnly: false },
+  { to: '/movements', icon: FileText, label: 'Movimientos', adminOnly: false },
+  { to: '/reports', icon: BarChart3, label: 'Reportes', adminOnly: true },
+  { to: '/customers', icon: Users, label: 'Clientes', adminOnly: false },
+  { to: '/users', icon: Shield, label: 'Usuarios', adminOnly: true },
 ]
 
 export default function Layout({ children }) {
-  const { user, signOut } = useAuth()
+  const { user, profile, isAdmin, signOut } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
+
+  const navItems = allNavItems.filter((item) => isAdmin || !item.adminOnly)
 
   const handleLogout = async () => {
     await signOut()
@@ -97,7 +101,8 @@ export default function Layout({ children }) {
         </nav>
 
         <div>
-          <p className={styles.userEmail}>{user?.email}</p>
+          <p className={styles.userEmail}>{profile?.username || user?.email}</p>
+          <p className={styles.userRole}>{isAdmin ? 'Administrador' : 'Vendedor'}</p>
           <button className={styles.logoutBtn} onClick={handleLogout}>
             <LogOut size={18} />
             Cerrar sesión

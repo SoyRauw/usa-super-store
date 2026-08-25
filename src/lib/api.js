@@ -171,7 +171,7 @@ export async function fetchVariantsForPos(search = '') {
     .gt('stock', 0)
     .eq('active', true)
   if (search) {
-    query = query.or(`sku.ilike.%${search}%,barcode.ilike.%${search}%,products.name.ilike.%${search}%`)
+    query = query.or(`sku.ilike.%${search}%,barcode.ilike.%${search}%,variant_name.ilike.%${search}%,products.name.ilike.%${search}%`)
   }
   const { data, error } = await query.limit(50)
   if (error) throw error
@@ -201,7 +201,7 @@ export async function updateVariantStock(variantId, newStock) {
 }
 
 // Movements / sales
-const MOVEMENT_SELECT = '*, movement_items(*, products(name, id, category_id, categories(name)), product_variants(sku, color, variant_name, size)), movement_payments(*)'
+const MOVEMENT_SELECT = '*, movement_items(*, products(sku, name, id, category_id, categories(name)), product_variants(sku, color, variant_name, size)), movement_payments(*)'
 
 export async function createMovement(movement) {
   const { data, error } = await supabase.from('movements').insert(movement).select().single()

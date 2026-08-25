@@ -153,10 +153,18 @@
 }
 
 .userEmail {
-  padding: 0 1.25rem 0.75rem;
+  padding: 0 1.25rem 0.25rem;
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.4);
   word-break: break-all;
+}
+
+.userRole {
+  padding: 0 1.25rem 0.75rem;
+  font-size: 0.6875rem;
+  color: rgba(255, 255, 255, 0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .main {
