@@ -21,7 +21,7 @@ function RoleGuard({ children }) {
   const location = useLocation()
 
   if (loading) return <div className="p-8 text-center">Cargando...</div>
-  if (role === 'vendedor' && ADMIN_ROUTES.some((r) => location.pathname.startsWith(r))) {
+  if (role !== 'admin' && ADMIN_ROUTES.some((r) => location.pathname.startsWith(r))) {
     return <Navigate to="/pos" replace />
   }
   return children
