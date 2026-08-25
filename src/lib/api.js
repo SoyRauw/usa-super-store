@@ -201,7 +201,7 @@ export async function updateVariantStock(variantId, newStock) {
 }
 
 // Movements / sales
-const MOVEMENT_SELECT = '*, movement_items(*, products(name, id, category_id, categories(name)), product_variants(sku, color, variant_name, size)), movement_payments(*), profiles(name, email)'
+const MOVEMENT_SELECT = '*, movement_items(*, products(name, id, category_id, categories(name)), product_variants(sku, color, variant_name, size)), movement_payments(*)'
 
 export async function createMovement(movement) {
   const { data, error } = await supabase.from('movements').insert(movement).select().single()

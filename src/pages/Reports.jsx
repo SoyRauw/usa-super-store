@@ -75,6 +75,14 @@ export default function Reports() {
     loadData()
   }, [startDate, endDate, userId, method])
 
+  const profilesById = useMemo(() => {
+    const map = {}
+    users.forEach((u) => {
+      map[u.id] = u
+    })
+    return map
+  }, [users])
+
   const summary = useMemo(() => {
     const totalSales = movements.reduce(
       (sum, m) => sum + (parseFloat(m.total_amount) || 0),
@@ -327,6 +335,7 @@ export default function Reports() {
                 <tr>
                   <th>Fecha</th>
                   <th>Recibo</th>
+                  <th>Cajero</th>
                   <th>Cliente</th>
                   <th>Método</th>
                   <th>Descuento</th>
@@ -336,10 +345,13 @@ export default function Reports() {
               <tbody>
                 {movements.map((m) => {
                   const discount = parseFloat(m.discount_amount) || 0
+                  const cashierProfile = profilesById[m.user_id]
+                  const cashier = cashierProfile?.name || cashierProfile?.email || '—'
                   return (
                     <tr key={m.id}>
                       <td>{new Date(m.created_at).toLocaleString('es-VE')}</td>
                       <td className="font-mono text-xs text-slate-500">#{m.id.slice(0, 8)}</td>
+                      <td>{cashier}</td>
                       <td>{m.customer_name || 'Cliente general'}</td>
                       <td>{PAYMENT_METHODS[m.payment_method] || m.payment_method || '—'}</td>
                       <td>{discount > 0 ? formatMoney(discount) : '—'}</td>
@@ -349,7 +361,7 @@ export default function Reports() {
                 })}
                 {movements.length === 0 && (
                   <tr>
-                    <td colSpan="6" className="py-6 text-center text-slate-500">
+                    <td colSpan="7" className="py-6 text-center text-slate-500">
                       No hay ventas en este período.
                     </td>
                   </tr>
