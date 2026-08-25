@@ -312,7 +312,7 @@ export async function fetchDashboardStats() {
 export async function fetchCustomers(search = '') {
   let query = supabase.from('customers').select('*').order('name')
   if (search) {
-    query = query.or(`name.ilike.%${search}%,phone.ilike.%${search}%,id_number.ilike.%${search}%`)
+    query = query.or(`sku.ilike.%${search}%,barcode.ilike.%${search}%,variant_name.ilike.%${search}%,products.name.ilike.%${search}%`)
   }
   const { data, error } = await query
   if (error) throw error

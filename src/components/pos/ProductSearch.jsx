@@ -10,7 +10,13 @@ export default function ProductSearch({ onAdd }) {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    const timeout = setTimeout(() => loadVariants(search), 250)
+    const term = search.trim()
+    if (!term) {
+      setVariants([])
+      return
+    }
+
+    const timeout = setTimeout(() => loadVariants(term), 250)
     return () => clearTimeout(timeout)
   }, [search])
 
@@ -34,14 +40,19 @@ export default function ProductSearch({ onAdd }) {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por nombre, SKU o escanear código..."
+          placeholder="Buscar por nombre, SKU, variante o escanear código..."
           className={styles.searchInput}
           autoFocus
         />
       </div>
 
       <div className={styles.results}>
-        {loading ? (
+        {!search.trim() ? (
+          <div className={styles.emptyState}>
+            <Package size={44} />
+            <p>Escribe el nombre de un producto o escanea un código</p>
+          </div>
+        ) : loading ? (
           <p className={styles.emptyText}>Buscando...</p>
         ) : variants.length === 0 ? (
           <div className={styles.emptyState}>
