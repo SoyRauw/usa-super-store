@@ -171,7 +171,7 @@ export async function fetchVariantsForPos(search = '') {
     .gt('stock', 0)
     .eq('active', true)
   if (search) {
-    query = query.or(`sku.ilike.%${search}%,barcode.ilike.%${search}%,variant_name.ilike.%${search}%,products.name.ilike.%${search}%`)
+    query = query.or(`sku.ilike.%${search}%,barcode.ilike.%${search}%,variant_name.ilike.%${search}%`)
   }
   const { data, error } = await query.limit(50)
   if (error) throw error

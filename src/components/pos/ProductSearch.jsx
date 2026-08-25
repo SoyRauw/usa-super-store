@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Search, Package } from 'lucide-react'
+import { supabase } from '../../lib/supabaseClient'
 import { fetchVariantsForPos, formatMoney } from '../../lib/api'
 import { formatVariantLabel } from '../../lib/sku'
 import styles from './ProductSearch.module.css'
@@ -23,10 +24,34 @@ export default function ProductSearch({ onAdd }) {
   async function loadVariants(term) {
     setLoading(true)
     try {
-      const data = await fetchVariantsForPos(term)
-      setVariants(data)
+      const [variantResults, { data: productsData }] = await Promise.all([
+        fetchVariantsForPos(term),
+        supabase
+          .from('products')
+          .select('*, categories(*), product_variants(*)')
+          .eq('active', true)
+          .or(`name.ilike.%${term}%,id.ilike.%${term}%`)
+          .limit(20),
+      ])
+
+      const byProduct = []
+      ;(productsData || []).forEach((product) => {
+        (product.product_variants || [])
+          .filter((v) => v.stock > 0 && v.active !== false)
+          .forEach((variant) => {
+            byProduct.push({ ...variant, products: product })
+          })
+      })
+
+      const map = new Map()
+      ;[...variantResults, ...byProduct].forEach((v) => {
+        if (!map.has(v.id)) map.set(v.id, v)
+      })
+
+      setVariants(Array.from(map.values()))
     } catch (err) {
       console.error(err)
+      setVariants([])
     } finally {
       setLoading(false)
     }
